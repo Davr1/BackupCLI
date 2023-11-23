@@ -1,10 +1,9 @@
-﻿namespace BackupCLI
+﻿namespace BackupCLI;
+
+public class Program
 {
-    internal class Program
+    static void Main(string[] args)
     {
-        static void Main(string[] args)
-        {
-            Console.WriteLine(1);
-        }
+        var backupJobs = JSONManipulator.LoadFile("../../../example.json");
     }
 }
