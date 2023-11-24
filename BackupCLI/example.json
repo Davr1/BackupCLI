@@ -8,15 +8,5 @@
       "count": 10,
       "size": 5
     }
-  },
-  {
-    "sources": null,
-    "targets": [ "D:\\Zaloha", "X:\\Backup" ],
-    "method": "incremental",
-    "timing": "5 4 * * *",
-    "retention": {
-      "count": 10,
-      "size": 5
-    }
   }
 ]

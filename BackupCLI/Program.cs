@@ -1,6 +1,4 @@
-﻿using Quartz;
-
-namespace BackupCLI;
+﻿namespace BackupCLI;
 
 public class Program
 {
