@@ -1,7 +1,7 @@
 [
   {
-    "sources": [ "C:\\Users\\Pepa\\Dokumenty", "C:\\Hry", "D:\\Filmy" ],
-    "targets": [ "D:\\Zaloha", "X:\\Backup" ],
+    "sources": [ "C:\\autodesk" ],
+    "targets": [ "C:\\test" ],
     "method": "incremental",
     "timing": "5 4 * * *",
     "retention": {

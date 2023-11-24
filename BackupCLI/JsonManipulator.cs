@@ -28,7 +28,7 @@ public class BackupJobJson : ValidJson
     
     public List<string> Targets { get; set; } = new();
 
-    public string? Timing { get; set; }
+    public string Timing { get; set; } = null!;
 
     public BackupRetention Retention { get; set; } = new();
 
