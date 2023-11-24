@@ -10,7 +10,7 @@
         }
     },
     {
-        "sources": [],
+        "sources": null,
         "targets": ["D:\\Zaloha", "X:\\Backup"],
         "method": "incremental",
         "timing": null,

@@ -3,15 +3,24 @@ using System.Text.Json.Serialization;
 
 namespace BackupCLI;
 
-public static class JSONManipulator
+public static class JsonManipulator
 {
+    private static JsonSerializerOptions Options { get; } = new()
+    {
+        WriteIndented = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
+
     public static List<BackupJob> LoadFile(string path)
     {
-        if (!File.Exists(path)) throw new FileNotFoundException("Input file not found");
+        if (!File.Exists(path)) throw new FileNotFoundException("Input file not found.");
 
-        var backupJobs = JsonSerializer.Deserialize<List<BackupJob>>(File.ReadAllText(path));
+        string json = File.ReadAllText(path);
 
-        if (backupJobs is null) throw new JsonException("Input file is not a valid JSON file");
+        if (JsonSerializer.Deserialize<List<BackupJob>>(json, Options) is not { } backupJobs)
+            throw new JsonException("Input file is not a valid JSON file.");
+
+        backupJobs.ForEach(job => job.Validate());
 
         foreach (var job in backupJobs)
         {
@@ -23,31 +32,19 @@ public static class JSONManipulator
     }
 }
 
-public class BackupJob
+public class BackupJob : ValidJson
 {
-    [JsonPropertyName("sources")]
-    public List<string> Sources { get; set; }
-
-    [JsonPropertyName("targets")]
-    public List<string> Targets { get; set; }
-
-    [JsonPropertyName("timing")]
-    public string Timing { get; set; }
-
-    [JsonPropertyName("retention")]
-    public BackupRetention Retention { get; set; }
-
-    [JsonPropertyName("method")]
-    public BackupMethod Method { get; set; }
+    public List<string> Sources { get; set; } = new();
+    public List<string> Targets { get; set; } = new();
+    public string Timing { get; set; } = null!;
+    public BackupRetention Retention { get; set; } = new();
+    public BackupMethod Method { get; set; } = BackupMethod.Full;
 }
 
-public class BackupRetention
+public class BackupRetention : ValidJson
 {
-    [JsonPropertyName("count")]
-    public int Count { get; set; }
-
-    [JsonPropertyName("size")]
-    public int Size { get; set; }
+    public int Count { get; set; } = 2;
+    public int Size { get; set; } = 0;
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -56,4 +53,24 @@ public enum BackupMethod
     Full,
     Differential,
     Incremental
+}
+
+public class ValidJson
+{
+    private Dictionary<string, object?> DefaultProps { get; } = new();
+
+    public void Validate()
+    {
+        foreach (var prop in GetType().GetProperties().Where(prop => prop.GetValue(this) is null))
+        {
+            var value = DefaultProps[prop.Name] ?? throw new JsonException($"{prop.Name} cannot be null.");
+            prop.SetValue(this, value);
+        }
+    }
+
+    protected ValidJson()
+    {
+        foreach (var prop in GetType().GetProperties())
+            DefaultProps.Add(prop.Name, prop.GetValue(this));
+    }
 }

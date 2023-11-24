@@ -4,6 +4,13 @@ public class Program
 {
     static void Main(string[] args)
     {
-        var backupJobs = JSONManipulator.LoadFile("../../../example.json");
+        try
+        {
+            var backupJobs = JsonManipulator.LoadFile("../../../example.json");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
     }
 }
