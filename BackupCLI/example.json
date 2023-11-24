@@ -1,22 +1,22 @@
 [
-    {
-        "sources": ["C:\\Users\\Pepa\\Dokumenty", "C:\\Hry", "D:\\Filmy"],
-        "targets": ["D:\\Zaloha", "X:\\Backup"],
-        "method": "incremental",
-        "timing": "5 4 * * *",
-        "retention": {
-            "count": 10,
-            "size": 5
-        }
-    },
-    {
-        "sources": null,
-        "targets": ["D:\\Zaloha", "X:\\Backup"],
-        "method": "incremental",
-        "timing": null,
-        "retention": {
-            "count": 10,
-            "size": 5
-        }
+  {
+    "sources": [ "C:\\Users\\Pepa\\Dokumenty", "C:\\Hry", "D:\\Filmy" ],
+    "targets": [ "D:\\Zaloha", "X:\\Backup" ],
+    "method": "incremental",
+    "timing": "5 4 * * *",
+    "retention": {
+      "count": 10,
+      "size": 5
     }
+  },
+  {
+    "sources": null,
+    "targets": [ "D:\\Zaloha", "X:\\Backup" ],
+    "method": "incremental",
+    "timing": "5 4 * * *",
+    "retention": {
+      "count": 10,
+      "size": 5
+    }
+  }
 ]

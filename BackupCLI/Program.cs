@@ -1,4 +1,6 @@
-﻿namespace BackupCLI;
+﻿using Quartz;
+
+namespace BackupCLI;
 
 public class Program
 {
@@ -10,7 +12,7 @@ public class Program
         }
         catch (Exception e)
         {
-            Console.WriteLine(e.Message);
+            Console.WriteLine($"{e.GetType().Name} occurred while parsing json file:\n\t{e.Message}");
         }
     }
 }
