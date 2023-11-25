@@ -25,6 +25,7 @@ public class Program
                 }
                 catch (Exception e)
                 {
+                    Console.WriteLine("Job creation skipped:");
                     ErrorLog(e);
                     return null;
                 }

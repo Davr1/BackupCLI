@@ -1,8 +1,8 @@
 [
   {
     "sources": [ "C:\\autodesk" ],
-    "targets": [ "C:\\test", "C:\\test2" ],
-    "method": "differential",
+    "targets": [ "C:\\test" ],
+    "method": "incremental",
     "timing": "5 4 * * *",
     "retention": {
       "count": 10,
