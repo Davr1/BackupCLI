@@ -43,22 +43,31 @@ public static class FileSystemUtils
         foreach (var file in source.EnumerateFiles("*", RecursiveOptions))
         {
             var relativePath = file.FullName.Replace(source.FullName, "");
+            var lastFullBackupFile = new FileInfo(Path.Join(lastFullBackup, relativePath));
 
             // file was copied in the previous step
             if (File.Exists(Path.Join(target, relativePath))) continue;
 
-            // the archival flag is disabled, so the file hasn't changed
-            if (!file.HasAttributes(FileAttributes.Archive)) continue;
-
-            // compare hashes in case the file was incorrectly marked as changed
-            if (file.GetHash() != new FileInfo(Path.Join(lastFullBackup, relativePath)).GetHash())
+            // file wasn't present in the last full backup
+            if (!lastFullBackupFile.Exists)
             {
-                Directory.CreateDirectory(Path.Join(target, relativePath[..^file.Name.Length]));
+                file.SetAttributes(file.GetAttributes() & ~FileAttributes.Archive);
                 file.CopyTo(Path.Join(target, relativePath));
                 continue;
             }
 
+            // the archival flag is disabled and the modified time is the same, so the file was not changed
+            if (!file.HasAttributes(FileAttributes.Archive) && file.LastWriteTime == lastFullBackupFile.LastWriteTime) continue;
+
+            // remove the archival flag from the original file
             file.SetAttributes(file.GetAttributes() & ~FileAttributes.Archive);
+
+            // compare hashes in case the file was incorrectly marked as changed
+            if (file.GetHash() == lastFullBackupFile.GetHash()) continue;
+
+            // finally, copy the file
+            Directory.CreateDirectory(Path.Join(target, relativePath[..^file.Name.Length]));
+            file.CopyTo(Path.Join(target, relativePath));
         }
     }
 
