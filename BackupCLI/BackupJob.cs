@@ -56,11 +56,11 @@ public class BackupJob
             {
                 case BackupMethod.Differential when target.GetDirectories().Length > 0:
                     Console.WriteLine("differential");
+                    source.CopyDiff(Path.Join(target.FullName, dirName), "C:\\test\\FULL");
                     break;
 
                 case BackupMethod.Incremental when target.GetDirectories().Length > 0:
                     Console.WriteLine("incremental");
-                    source.CopyIncr(Path.Join(target.FullName, dirName), "C:\\test\\FULL");
                     break;
 
                 case BackupMethod.Full:

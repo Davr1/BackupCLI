@@ -2,7 +2,7 @@
   {
     "sources": [ "C:\\autodesk" ],
     "targets": [ "C:\\test" ],
-    "method": "incremental",
+    "method": "differential",
     "timing": "5 4 * * *",
     "retention": {
       "count": 10,

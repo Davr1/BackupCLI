@@ -24,11 +24,11 @@ public static class FileSystemUtils
             dir.CopyTo(Path.Join(target, dir.Name));
     }
 
-    public static void CopyDiff(this DirectoryInfo source, string target)
+    public static void CopyIncr(this DirectoryInfo source, string target)
     {
     }
 
-    public static void CopyIncr(this DirectoryInfo source, string target, string lastFullBackup)
+    public static void CopyDiff(this DirectoryInfo source, string target, string lastBackup)
     {
         if (!Directory.Exists(target)) Directory.CreateDirectory(target);
 
@@ -36,14 +36,14 @@ public static class FileSystemUtils
         {
             var relativePath = dir.FullName.Replace(source.FullName, "");
 
-            if (!Directory.Exists(Path.Join(lastFullBackup, relativePath)))
+            if (!Directory.Exists(Path.Join(lastBackup, relativePath)))
                 dir.CopyTo(Path.Join(target, relativePath));
         }
 
         foreach (var file in source.EnumerateFiles("*", RecursiveOptions))
         {
             var relativePath = file.FullName.Replace(source.FullName, "");
-            var lastFullBackupFile = new FileInfo(Path.Join(lastFullBackup, relativePath));
+            var lastFullBackupFile = new FileInfo(Path.Join(lastBackup, relativePath));
 
             // file was copied in the previous step
             if (File.Exists(Path.Join(target, relativePath))) continue;
