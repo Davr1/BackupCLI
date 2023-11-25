@@ -2,7 +2,7 @@
   {
     "sources": [ "C:\\autodesk" ],
     "targets": [ "C:\\test", "C:\\test2" ],
-    "method": "full",
+    "method": "differential",
     "timing": "5 4 * * *",
     "retention": {
       "count": 10,

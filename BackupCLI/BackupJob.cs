@@ -4,9 +4,9 @@ namespace BackupCLI;
 
 public class BackupJob
 {
-    public List<string> Sources { get; set; }
+    public List<DirectoryInfo> Sources { get; set; }
 
-    public List<string> Targets { get; set; }
+    public List<DirectoryInfo> Targets { get; set; }
 
     public CronExpression Timing { get; set; }
 
@@ -16,15 +16,20 @@ public class BackupJob
 
     public BackupJob(BackupJobJson json)
     {
-        Sources = json.Sources;
-        foreach (var source in Sources.Where(s => !Directory.Exists(s)))
+        foreach (var source in json.Sources.Where(s => !Directory.Exists(s)))
             throw new DirectoryNotFoundException($"Source directory {source} does not exist.");
+
+        Sources = json.Sources.Select(s => new DirectoryInfo(s)).ToList();
         if (Sources.Count == 0) throw new ArgumentException("Sources list cannot be empty.");
 
-        Targets = json.Targets;
-        foreach (var target in Targets.Where(t => !Directory.Exists(t)))
+        foreach (var target in json.Targets.Where(t => !Directory.Exists(t)))
             Directory.CreateDirectory(target);
+
+        Targets = json.Targets.Select(t => new DirectoryInfo(t)).ToList();
         if (Targets.Count == 0) throw new ArgumentException("Targets list cannot be empty.");
+
+        if (Targets.Any(t => Sources.Any(s => DirectoryUtils.AreDirectAncestors(s, t))))
+            throw new ArgumentException("Targets cannot be direct ancestors of sources (and vice versa).");
 
         List<string> parts = json.Timing.Split(' ').ToList();
 
@@ -46,7 +51,22 @@ public class BackupJob
         var time = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
 
         foreach (var source in Sources)
-            foreach (var target in Targets)
-                new DirectoryInfo(source).CopyTo(Path.Join(target, time));
+        foreach (var target in Targets)
+            switch (Method)
+            {
+                case BackupMethod.Differential when target.GetDirectories().Length > 0:
+                    Console.WriteLine("differential");
+                    break;
+
+                case BackupMethod.Incremental when target.GetDirectories().Length > 0:
+                    Console.WriteLine("incremental");
+                    break;
+
+                case BackupMethod.Full:
+                default:
+                    Console.WriteLine("full");
+                    source.CopyTo(Path.Combine(target.FullName, time));
+                    break;
+            }
     }   
 }
