@@ -39,4 +39,6 @@ public static class DirectoryUtils
 
         return false;
     }
+
+    public static DirectoryInfo FromString(string path) => new DirectoryInfo(Path.Join(path, ".").ToLower());
 }

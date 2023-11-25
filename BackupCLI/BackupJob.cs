@@ -19,13 +19,13 @@ public class BackupJob
         foreach (var source in json.Sources.Where(s => !Directory.Exists(s)))
             throw new DirectoryNotFoundException($"Source directory {source} does not exist.");
 
-        Sources = json.Sources.Select(s => new DirectoryInfo(s)).ToList();
+        Sources = json.Sources.Select(DirectoryUtils.FromString).ToList();
         if (Sources.Count == 0) throw new ArgumentException("Sources list cannot be empty.");
 
         foreach (var target in json.Targets.Where(t => !Directory.Exists(t)))
             Directory.CreateDirectory(target);
 
-        Targets = json.Targets.Select(t => new DirectoryInfo(t)).ToList();
+        Targets = json.Targets.Select(DirectoryUtils.FromString).ToList();
         if (Targets.Count == 0) throw new ArgumentException("Targets list cannot be empty.");
 
         if (Targets.Any(t => Sources.Any(s => DirectoryUtils.AreDirectAncestors(s, t))))
