@@ -2,16 +2,14 @@
 
 public static class DirectoryInfoExtension
 {
-    public static void CopyTo(this DirectoryInfo source, string target) => source.CopyTo(new DirectoryInfo(target));
-
-    public static void CopyTo(this DirectoryInfo source, DirectoryInfo target)
+    public static void CopyTo(this DirectoryInfo source, string target)
     {
-        if (!target.Exists) target.Create();
+        if (!Directory.Exists(target)) Directory.CreateDirectory(target);
 
         foreach (var file in source.EnumerateFiles())
-            file.CopyTo(Path.Combine(target.FullName, file.Name), true);
+            file.CopyTo(Path.Combine(target, file.Name), true);
 
         foreach (var dir in source.EnumerateDirectories())
-            dir.CopyTo(Path.Combine(target.FullName, dir.Name));
+            dir.CopyTo(Path.Combine(target, dir.Name));
     }
 }
