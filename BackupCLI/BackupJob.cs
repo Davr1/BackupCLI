@@ -17,12 +17,14 @@ public class BackupJob
     public BackupJob(BackupJobJson json)
     {
         Sources = json.Sources;
-        foreach (var s in Sources.Where(source => !Directory.Exists(source)))
-            throw new DirectoryNotFoundException($"Source directory {s} does not exist.");
+        foreach (var source in Sources.Where(s => !Directory.Exists(s)))
+            throw new DirectoryNotFoundException($"Source directory {source} does not exist.");
+        if (Sources.Count == 0) throw new ArgumentException("Sources list cannot be empty.");
 
         Targets = json.Targets;
-        foreach (var t in Targets.Where(source => !Directory.Exists(source)))
-            Directory.CreateDirectory(t);
+        foreach (var target in Targets.Where(t => !Directory.Exists(t)))
+            Directory.CreateDirectory(target);
+        if (Targets.Count == 0) throw new ArgumentException("Targets list cannot be empty.");
 
         List<string> parts = json.Timing.Split(' ').ToList();
 
@@ -38,4 +40,13 @@ public class BackupJob
 
         Method = json.Method;
     }
+
+    public void PerformBackup()
+    {
+        var time = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+
+        foreach (var source in Sources)
+            foreach (var target in Targets)
+                new DirectoryInfo(source).CopyTo(Path.Join(target, time));
+    }   
 }

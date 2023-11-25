@@ -7,7 +7,7 @@ public class Program
         List<BackupJobJson> json;
         try
         {
-            json = JsonManipulator.LoadFile("../../../examplee.json");
+            json = JsonManipulator.LoadFile("../../../example.json");
         }
         catch (Exception e)
         {
@@ -33,6 +33,10 @@ public class Program
             })
             .Where(job => job is not null)
             .ToList()!;
+
+        Console.WriteLine("Press any key to start backup");
+        Console.ReadLine();
+        jobs.ForEach(job => job.PerformBackup());
     }
 
     public static void ErrorLog(Exception e)
