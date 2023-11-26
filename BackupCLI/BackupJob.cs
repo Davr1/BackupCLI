@@ -50,22 +50,27 @@ public class BackupJob
     {
         var dirName = $"{Method.ToString().ToUpper()}_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
 
+        var primaryTarget = Targets.First();
+
         foreach (var source in Sources)
-        foreach (var target in Targets)
             switch (Method)
             {
-                case BackupMethod.Differential when target.GetDirectories().Length > 0:
-                    source.CopyDiff(Path.Join(target.FullName, dirName), "C:\\rozvrh\\FULL"); //todo: actually find the last backup
+                case BackupMethod.Differential when primaryTarget.GetDirectories().Length > 0:
+                    source.CopyDiff(Path.Join(Targets.First().FullName, dirName), "C:\\rozvrh\\FULL"); //todo: actually find the last backup
                     break;
 
-                case BackupMethod.Incremental when target.GetDirectories().Length > 0:
+                case BackupMethod.Incremental when primaryTarget.GetDirectories().Length > 0:
                     throw new NotImplementedException();
                     break;
 
                 case BackupMethod.Full:
                 default:
-                    source.CopyTo(Path.Join(target.FullName, dirName));
+                    source.CopyTo(Path.Join(Targets.First().FullName, dirName));
                     break;
             }
+
+        // this speeds up the process by using the simplest algorithm to mirror the first target
+        foreach (var target in Targets.Skip(1))
+            new DirectoryInfo(Path.Join(primaryTarget.FullName, dirName)).CopyTo(Path.Join(target.FullName, dirName));
     }   
 }
