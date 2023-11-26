@@ -1,7 +1,7 @@
 [
   {
-    "sources": [ "C:\\users\\gpjmp\\schedule" ],
-    "targets": [ "C:\\rozvrh", "C:\\rozvrh2", "C:\\rozvrh3" ],
+    "sources": [ "C:\\autodesk" ],
+    "targets": [ "C:\\acad", "C:\\acad2", "C:\\acad3" ],
     "method": "differential",
     "timing": "5 4 * * *",
     "retention": {

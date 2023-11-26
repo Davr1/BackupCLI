@@ -48,15 +48,18 @@ public class BackupJob
 
     public void PerformBackup()
     {
-        var dirName = $"{Method.ToString().ToUpper()}_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
+        string dirName = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
 
         var primaryTarget = Targets.First();
 
         foreach (var source in Sources)
             switch (Method)
             {
-                case BackupMethod.Differential when primaryTarget.GetDirectories().Length > 0:
-                    source.CopyDiff(Path.Join(Targets.First().FullName, dirName), "C:\\rozvrh\\FULL"); //todo: actually find the last backup
+                case BackupMethod.Differential when FileSystemUtils.GetLastFullBackup(primaryTarget) is { } lastFullBackup:
+                    dirName = $"#DIFF_{dirName}";
+                    source.CopyDiff(
+                        Path.Join(Targets.First().FullName, dirName, source.Name),
+                        Path.Join(lastFullBackup.FullName, source.Name));
                     break;
 
                 case BackupMethod.Incremental when primaryTarget.GetDirectories().Length > 0:
@@ -65,12 +68,17 @@ public class BackupJob
 
                 case BackupMethod.Full:
                 default:
-                    source.CopyTo(Path.Join(Targets.First().FullName, dirName));
+                    dirName = $"#FULL_{dirName}";
+                    source.CopyTo(Path.Join(Targets.First().FullName, dirName, source.Name));
                     break;
             }
 
-        // this speeds up the process by using the simplest algorithm to mirror the first target
+        // this speeds up the process by using the simplest algorithm to mirror the primary target
         foreach (var target in Targets.Skip(1))
-            new DirectoryInfo(Path.Join(primaryTarget.FullName, dirName)).CopyTo(Path.Join(target.FullName, dirName));
+        foreach (var sub in primaryTarget.GetDirectories("#*"))
+        {
+            var dest = Path.Join(target.FullName, sub.Name);
+            if (!Directory.Exists(dest)) sub.CopyTo(dest);
+        }
     }   
 }

@@ -103,4 +103,10 @@ public static class FileSystemUtils
     public static FileAttributes GetAttributes(this FileInfo file) => File.GetAttributes(file.FullName);
     public static bool HasAttributes(this FileInfo file, FileAttributes attributes) => (file.GetAttributes() & attributes) != 0;
     public static void SetAttributes(this FileInfo file, FileAttributes attributes) => File.SetAttributes(file.FullName, attributes);
+
+    public static DirectoryInfo? GetLastFullBackup(DirectoryInfo dir)
+    {
+        var fullBackups = dir.GetDirectories("#FULL_*", TopLevelOptions).ToList();
+        return fullBackups.Count == 0 ? null : fullBackups.OrderByDescending(d => d.CreationTime).First();
+    }
 }
