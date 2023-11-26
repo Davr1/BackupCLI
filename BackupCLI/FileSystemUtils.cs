@@ -1,4 +1,5 @@
 ﻿using System.Security.Cryptography;
+using Microsoft.VisualBasic;
 
 namespace BackupCLI;
 
@@ -11,11 +12,11 @@ public static class FileSystemUtils
     public static void CopyTo(this DirectoryInfo source, string target, bool recursive = true)
     {
         if (!Directory.Exists(target)) Directory.CreateDirectory(target);
-
+        
         foreach (var file in source.EnumerateFiles("*", TopLevelOptions))
         {
             file.CopyTo(Path.Join(target, file.Name), true);
-            file.SetAttributes(file.GetAttributes() & ~FileAttributes.Archive);
+            file.Attributes &= ~FileAttributes.Archive;
         }
 
         if (!recursive) return;
@@ -50,20 +51,23 @@ public static class FileSystemUtils
             // file was present in the last full backup
             if (new FileInfo(Path.Join(lastBackup, relativePath)) is { Exists: true } lastFullBackupFile)
             {
-                // the archival flag is disabled and the modified time is the same, so the file was not changed
-                if (!file.HasAttributes(FileAttributes.Archive) &&
-                    file.LastWriteTime == lastFullBackupFile.LastWriteTime) continue;
+                // the modified time and the size is the same, so the file was not changed
+                if (file.LastWriteTime == lastFullBackupFile.LastWriteTime &&
+                    file.Length == lastFullBackupFile.Length) continue;
+
+                // the archival flag is disabled, so the file was not changed
+                if (!file.Attributes.HasFlag(FileAttributes.Archive)) continue;
 
                 // compare hashes in case the file was incorrectly marked as changed
                 if (file.GetHash() == lastFullBackupFile.GetHash())
                 {
-                    file.SetAttributes(file.GetAttributes() & ~FileAttributes.Archive);
+                    file.Attributes &= ~FileAttributes.Archive;
                     continue;
                 }
             }
 
             // remove the archival flag from the original file
-            file.SetAttributes(file.GetAttributes() & ~FileAttributes.Archive);
+            file.Attributes &= ~FileAttributes.Archive;
 
             // finally, copy the file
             Directory.CreateDirectory(Path.Join(target, relativePath[..^file.Name.Length]));
@@ -100,10 +104,6 @@ public static class FileSystemUtils
         return BitConverter.ToString(Hash.ComputeHash(stream)).Replace("-", "").ToLower();
     }
     
-    public static FileAttributes GetAttributes(this FileInfo file) => File.GetAttributes(file.FullName);
-    public static bool HasAttributes(this FileInfo file, FileAttributes attributes) => (file.GetAttributes() & attributes) != 0;
-    public static void SetAttributes(this FileInfo file, FileAttributes attributes) => File.SetAttributes(file.FullName, attributes);
-
     public static DirectoryInfo? GetLastFullBackup(DirectoryInfo dir)
     {
         var fullBackups = dir.GetDirectories("#FULL_*", TopLevelOptions).ToList();
