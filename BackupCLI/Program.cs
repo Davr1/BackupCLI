@@ -4,6 +4,7 @@ public class Program
 {
     static void Main(string[] args)
     {
+        //todo: rewrite this entire file
         List<BackupJobJson> json;
         try
         {
@@ -37,7 +38,10 @@ public class Program
 
         Console.WriteLine("Press any key to start backup");
         Console.ReadLine();
+        var watch = System.Diagnostics.Stopwatch.StartNew();
         jobs.ForEach(job => job.PerformBackup());
+        watch.Stop();
+        Console.WriteLine($"Took {watch.ElapsedMilliseconds} ms");
     }
 
     public static void ErrorLog(Exception e)

@@ -55,17 +55,15 @@ public class BackupJob
             switch (Method)
             {
                 case BackupMethod.Differential when target.GetDirectories().Length > 0:
-                    Console.WriteLine("differential");
-                    source.CopyDiff(Path.Join(target.FullName, dirName), "C:\\test\\FULL");
+                    source.CopyDiff(Path.Join(target.FullName, dirName), "C:\\rozvrh\\FULL"); //todo: actually find the last backup
                     break;
 
                 case BackupMethod.Incremental when target.GetDirectories().Length > 0:
-                    Console.WriteLine("incremental");
+                    throw new NotImplementedException();
                     break;
 
                 case BackupMethod.Full:
                 default:
-                    Console.WriteLine("full");
                     source.CopyTo(Path.Join(target.FullName, dirName));
                     break;
             }

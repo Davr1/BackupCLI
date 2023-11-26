@@ -43,27 +43,27 @@ public static class FileSystemUtils
         foreach (var file in source.EnumerateFiles("*", RecursiveOptions))
         {
             var relativePath = file.FullName.Replace(source.FullName, "");
-            var lastFullBackupFile = new FileInfo(Path.Join(lastBackup, relativePath));
 
             // file was copied in the previous step
             if (File.Exists(Path.Join(target, relativePath))) continue;
 
-            // file wasn't present in the last full backup
-            if (!lastFullBackupFile.Exists)
+            // file was present in the last full backup
+            if (new FileInfo(Path.Join(lastBackup, relativePath)) is { Exists: true } lastFullBackupFile)
             {
-                file.SetAttributes(file.GetAttributes() & ~FileAttributes.Archive);
-                file.CopyTo(Path.Join(target, relativePath));
-                continue;
-            }
+                // the archival flag is disabled and the modified time is the same, so the file was not changed
+                if (!file.HasAttributes(FileAttributes.Archive) &&
+                    file.LastWriteTime == lastFullBackupFile.LastWriteTime) continue;
 
-            // the archival flag is disabled and the modified time is the same, so the file was not changed
-            if (!file.HasAttributes(FileAttributes.Archive) && file.LastWriteTime == lastFullBackupFile.LastWriteTime) continue;
+                // compare hashes in case the file was incorrectly marked as changed
+                if (file.GetHash() == lastFullBackupFile.GetHash())
+                {
+                    file.SetAttributes(file.GetAttributes() & ~FileAttributes.Archive);
+                    continue;
+                }
+            }
 
             // remove the archival flag from the original file
             file.SetAttributes(file.GetAttributes() & ~FileAttributes.Archive);
-
-            // compare hashes in case the file was incorrectly marked as changed
-            if (file.GetHash() == lastFullBackupFile.GetHash()) continue;
 
             // finally, copy the file
             Directory.CreateDirectory(Path.Join(target, relativePath[..^file.Name.Length]));
