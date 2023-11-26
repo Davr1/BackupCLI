@@ -1,8 +1,8 @@
 [
   {
-    "sources": [ "C:\\autodesk" ],
-    "targets": [ "C:\\acad", "C:\\acad2", "C:\\acad3" ],
-    "method": "differential",
+    "sources": [ "C:\\users\\gpjmp\\schedule" ],
+    "targets": [ "C:\\rozvrh" ],
+    "method": "incremental",
     "timing": "5 4 * * *",
     "retention": {
       "count": 10,

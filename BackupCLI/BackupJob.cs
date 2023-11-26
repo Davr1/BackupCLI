@@ -5,13 +5,9 @@ namespace BackupCLI;
 public class BackupJob
 {
     public List<DirectoryInfo> Sources { get; set; }
-
     public List<DirectoryInfo> Targets { get; set; }
-
     public CronExpression Timing { get; set; }
-
     public BackupRetention Retention { get; set; }
-
     public BackupMethod Method { get; set; }
 
     public BackupJob(BackupJobJson json)
@@ -55,15 +51,11 @@ public class BackupJob
         foreach (var source in Sources)
             switch (Method)
             {
-                case BackupMethod.Differential when FileSystemUtils.GetLastFullBackup(primaryTarget) is { } lastFullBackup:
-                    dirName = $"#DIFF_{dirName}";
-                    source.CopyDiff(
+                case BackupMethod.Incremental when FileSystemUtils.GetBackups(primaryTarget) is { } backups:
+                    dirName = $"#INCR_{dirName}";
+                    source.CopyIncr(
                         Path.Join(Targets.First().FullName, dirName, source.Name),
-                        Path.Join(lastFullBackup.FullName, source.Name));
-                    break;
-
-                case BackupMethod.Incremental when primaryTarget.GetDirectories().Length > 0:
-                    throw new NotImplementedException();
+                        new BackupTree(backups.Select(d => new DirectoryInfo(Path.Join(d.FullName, source.Name))).ToList()));
                     break;
 
                 case BackupMethod.Full:

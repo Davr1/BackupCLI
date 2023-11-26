@@ -36,8 +36,6 @@ public class Program
             .Where(job => job is not null)
             .ToList()!;
 
-        Console.WriteLine("Press any key to start backup");
-        Console.ReadLine();
         var watch = System.Diagnostics.Stopwatch.StartNew();
         jobs.ForEach(job => job.PerformBackup());
         watch.Stop();

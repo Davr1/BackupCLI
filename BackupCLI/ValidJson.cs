@@ -10,7 +10,6 @@ namespace BackupCLI;
 public class ValidJson
 {
     private Dictionary<string, object?> DefaultProps { get; }
-
     private object? PropOrDefault(PropertyInfo prop) => prop.GetValue(this) ?? DefaultProps[prop.Name];
 
     public void Validate()
