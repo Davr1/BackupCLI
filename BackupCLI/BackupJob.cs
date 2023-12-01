@@ -51,17 +51,16 @@ public class BackupJob
         foreach (var source in Sources)
             switch (Method)
             {
-                case BackupMethod.Incremental when FileSystemUtils.GetBackups(primaryTarget) is { } backups:
-                    dirName = $"#INCR_{dirName}";
-                    source.CopyIncr(
-                        Path.Join(Targets.First().FullName, dirName, source.Name),
+                case BackupMethod.Incremental when GetPackageContents(primaryTarget) is { Count: > 0 } backups:
+                    Backup(
+                        source,
+                        Path.Join(primaryTarget.FullName, $"#INCR_{dirName}", source.Name),
                         new BackupTree(backups.Select(d => new DirectoryInfo(Path.Join(d.FullName, source.Name))).ToList()));
                     break;
 
                 case BackupMethod.Full:
                 default:
-                    dirName = $"#FULL_{dirName}";
-                    source.CopyTo(Path.Join(Targets.First().FullName, dirName, source.Name));
+                    source.CopyTo(Path.Join(Targets.First().FullName, $"#FULL_{dirName}", source.Name));
                     break;
             }
 
@@ -72,5 +71,56 @@ public class BackupJob
             var dest = Path.Join(target.FullName, sub.Name);
             if (!Directory.Exists(dest)) sub.CopyTo(dest);
         }
-    }   
+    }
+
+    public static List<DirectoryInfo> GetPackageContents(DirectoryInfo dir) =>
+        dir.GetDirectories("#*", FileSystemUtils.TopLevelOptions).OrderBy(d => d.CreationTime).ToList();
+    
+    public static void Backup(DirectoryInfo source, string target, BackupTree packageParts)
+    {
+        if (!Directory.Exists(target)) Directory.CreateDirectory(target);
+
+        foreach (var dir in source.EnumerateDirectories("*", FileSystemUtils.RecursiveOptions))
+        {
+            var relativePath = dir.FullName.Replace(source.FullName, "");
+
+            if (packageParts.GetDirPath(relativePath) is null && !Directory.Exists(Path.Join(target, relativePath)))
+                dir.CopyTo(Path.Join(target, relativePath));
+        }
+
+        foreach (var file in source.EnumerateFiles("*", FileSystemUtils.RecursiveOptions))
+        {
+            var relativePath = file.FullName.Replace(source.FullName, "");
+
+            // file was copied in the previous step
+            if (File.Exists(Path.Join(target, relativePath))) continue;
+
+            // file was present in the previous backup packages
+            if (packageParts.GetFilePath(relativePath) is string path)
+            {
+                var backupFile = new FileInfo(path);
+
+                // the modified time and the size is the same, so the file has not changed
+                if (file.LastWriteTime == backupFile.LastWriteTime &&
+                    file.Length == backupFile.Length) continue;
+
+                // the archival flag is disabled, so the file has not changed
+                if (!file.Attributes.HasFlag(FileAttributes.Archive)) continue;
+
+                // compare hashes in case the file was incorrectly marked as changed
+                if (file.GetHash() == backupFile.GetHash())
+                {
+                    file.Attributes &= ~FileAttributes.Archive;
+                    continue;
+                }
+            }
+
+            // remove the archival flag from the original file
+            file.Attributes &= ~FileAttributes.Archive;
+
+            // finally, copy the file
+            Directory.CreateDirectory(Path.Join(target, relativePath[..^file.Name.Length]));
+            file.CopyTo(Path.Join(target, relativePath));
+        }
+    }
 }

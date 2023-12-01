@@ -1,7 +1,7 @@
 [
   {
-    "sources": [ "C:\\users\\gpjmp\\schedule" ],
-    "targets": [ "C:\\rozvrh" ],
+    "sources": [ "C:\\autodesk" ],
+    "targets": [ "C:\\acad" ],
     "method": "incremental",
     "timing": "5 4 * * *",
     "retention": {
