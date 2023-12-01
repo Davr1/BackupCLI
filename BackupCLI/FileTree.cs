@@ -14,6 +14,12 @@ public class FileTree
         return Tree.TryGetValue(relativePath.ToLower(), out int idx) ? GetFullPath(idx, relativePath) : null;
     }
 
+    public FileInfo? GetFile(string relativePath)
+        => GetFullPath(relativePath) is string path ? new(path) : null;
+
+    public DirectoryInfo? GetDirectory(string relativePath)
+        => GetFullPath(relativePath + "\\") is string path ? new(path) : null;
+
     public FileTree(params DirectoryInfo[] sources) : this(sources.ToList()) { }
 
     public FileTree(List<DirectoryInfo> sources)

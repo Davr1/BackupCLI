@@ -43,7 +43,13 @@ public static class FileSystemUtils
         return false;
     }
 
-    public static DirectoryInfo FromString(string path) => new DirectoryInfo(Path.Join(path, ".").ToLower());
+    public static bool AreIdentical(FileInfo left, FileInfo right) =>
+        (left.Length == right.Length && left.LastWriteTime == right.LastWriteTime) || left.GetHash() == right.GetHash();
+
+    public static DirectoryInfo NormalizePath(string path) => new DirectoryInfo(Path.Join(path, ".").ToLower());
+
+    public static string GetRelativePath(DirectoryInfo dir, FileSystemInfo path)
+        => path.FullName.Replace(dir.FullName, string.Empty);
 
     public static string GetHash(this FileInfo file)
     {

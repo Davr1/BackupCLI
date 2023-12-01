@@ -15,13 +15,13 @@ public class BackupJob
         foreach (var source in json.Sources.Where(s => !Directory.Exists(s)))
             throw new DirectoryNotFoundException($"Source directory {source} does not exist.");
 
-        Sources = json.Sources.Select(FileSystemUtils.FromString).ToList();
+        Sources = json.Sources.Select(FileSystemUtils.NormalizePath).ToList();
         if (Sources.Count == 0) throw new ArgumentException("Sources list cannot be empty.");
 
         foreach (var target in json.Targets.Where(t => !Directory.Exists(t)))
             Directory.CreateDirectory(target);
 
-        Targets = json.Targets.Select(FileSystemUtils.FromString).ToList();
+        Targets = json.Targets.Select(FileSystemUtils.NormalizePath).ToList();
         if (Targets.Count == 0) throw new ArgumentException("Targets list cannot be empty.");
 
         if (Targets.Any(t => Sources.Any(s => FileSystemUtils.AreDirectAncestors(s, t))))
@@ -73,7 +73,7 @@ public class BackupJob
 
             string target = Path.Join(primaryTarget.FullName, dirName, source.Name);
 
-            Backup(source, target, packageParts);
+            BackupDirectory(source, target, packageParts);
         }
 
         // this speeds up the process by using the simplest algorithm to mirror the primary target
@@ -89,15 +89,12 @@ public class BackupJob
         dir.GetDirectories(searchPattern, FileSystemUtils.TopLevelOptions).OrderBy(d => d.CreationTime).ToList();
 
     private static DirectoryInfo? GetFullBackup(DirectoryInfo dir, string sourceName) =>
-        GetPackageContents(dir, "#FULL")
-            .LastOrDefault(dir => dir.GetDirectories(sourceName).Any());
+        GetPackageContents(dir, "#FULL").LastOrDefault(dir => dir.GetDirectories(sourceName).Any());
 
     private static List<DirectoryInfo> GetBackups(DirectoryInfo dir, string sourceName) =>
-        GetPackageContents(dir, "#*")
-            .Select(dir => dir.GetDirectories(sourceName).First())
-            .ToList();
+        GetPackageContents(dir, "#*").Select(dir => dir.GetDirectories(sourceName).First()).ToList();
     
-    public static void Backup(DirectoryInfo source, string target, FileTree packageParts)
+    private static void BackupDirectory(DirectoryInfo source, string target, FileTree packageParts)
     {
         if (!Directory.Exists(target)) Directory.CreateDirectory(target);
 
@@ -111,33 +108,28 @@ public class BackupJob
         // copy all the new folders
         foreach (var dir in source.EnumerateDirectories("*", FileSystemUtils.RecursiveOptions))
         {
-            var relativePath = dir.FullName.Replace(source.FullName, "");
+            string relativePath = FileSystemUtils.GetRelativePath(source, dir);
 
-            if (packageParts.GetFullPath(relativePath + "\\") is null && !Directory.Exists(Path.Join(target, relativePath)))
+            if (!Directory.Exists(packageParts.GetFullPath(relativePath + "\\")) && 
+                !Directory.Exists(Path.Join(target, relativePath)))
                 dir.CopyTo(Path.Join(target, relativePath));
         }
 
         foreach (var file in source.EnumerateFiles("*", FileSystemUtils.RecursiveOptions))
         {
-            var relativePath = file.FullName.Replace(source.FullName, "");
+            string relativePath = FileSystemUtils.GetRelativePath(source, file);
 
             // file was copied in the previous step
             if (File.Exists(Path.Join(target, relativePath))) continue;
 
-            // file was present in the previous backup packages
-            if (packageParts.GetFullPath(relativePath) is string path)
+            // file was present in the previous backups
+            if (packageParts.GetFile(relativePath) is FileInfo backupFile)
             {
-                var backupFile = new FileInfo(path);
-
-                // the modified time and the size is the same, so the file has not changed
-                if (file.LastWriteTime == backupFile.LastWriteTime &&
-                    file.Length == backupFile.Length) continue;
-
                 // the archival flag is disabled, so the file has not changed
                 if (!file.Attributes.HasFlag(FileAttributes.Archive)) continue;
 
-                // compare hashes in case the file was incorrectly marked as changed
-                if (file.GetHash() == backupFile.GetHash())
+                // compare metadata and hash
+                if (FileSystemUtils.AreIdentical(file, backupFile))
                 {
                     file.Attributes &= ~FileAttributes.Archive;
                     continue;
