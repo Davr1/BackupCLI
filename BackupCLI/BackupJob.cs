@@ -49,20 +49,32 @@ public class BackupJob
         var primaryTarget = Targets.First();
 
         foreach (var source in Sources)
+        {
+            FileTree packageParts;
+
             switch (Method)
             {
-                case BackupMethod.Incremental when GetPackageContents(primaryTarget) is { Count: > 0 } backups:
-                    Backup(
-                        source,
-                        Path.Join(primaryTarget.FullName, $"#INCR_{dirName}", source.Name),
-                        new BackupTree(backups.Select(d => new DirectoryInfo(Path.Join(d.FullName, source.Name))).ToList()));
+                case BackupMethod.Incremental when GetBackups(primaryTarget, source.Name) is { Count: > 0 } backups:
+                    dirName = $"#INCR_{dirName}";
+                    packageParts = new FileTree(backups);
+                    break;
+
+                case BackupMethod.Differential when GetFullBackup(primaryTarget, source.Name) is { } fullBackup:
+                    dirName = $"#DIFF_{dirName}";
+                    packageParts = new FileTree(fullBackup);
                     break;
 
                 case BackupMethod.Full:
                 default:
-                    source.CopyTo(Path.Join(Targets.First().FullName, $"#FULL_{dirName}", source.Name));
+                    dirName = $"#FULL_{dirName}";
+                    packageParts = new FileTree();
                     break;
             }
+
+            string target = Path.Join(primaryTarget.FullName, dirName, source.Name);
+
+            Backup(source, target, packageParts);
+        }
 
         // this speeds up the process by using the simplest algorithm to mirror the primary target
         foreach (var target in Targets.Skip(1))
@@ -73,18 +85,35 @@ public class BackupJob
         }
     }
 
-    public static List<DirectoryInfo> GetPackageContents(DirectoryInfo dir) =>
-        dir.GetDirectories("#*", FileSystemUtils.TopLevelOptions).OrderBy(d => d.CreationTime).ToList();
+    private static List<DirectoryInfo> GetPackageContents(DirectoryInfo dir, string searchPattern = "*") =>
+        dir.GetDirectories(searchPattern, FileSystemUtils.TopLevelOptions).OrderBy(d => d.CreationTime).ToList();
+
+    private static DirectoryInfo? GetFullBackup(DirectoryInfo dir, string sourceName) =>
+        GetPackageContents(dir, "#FULL")
+            .LastOrDefault(dir => dir.GetDirectories(sourceName).Any());
+
+    private static List<DirectoryInfo> GetBackups(DirectoryInfo dir, string sourceName) =>
+        GetPackageContents(dir, "#*")
+            .Select(dir => dir.GetDirectories(sourceName).First())
+            .ToList();
     
-    public static void Backup(DirectoryInfo source, string target, BackupTree packageParts)
+    public static void Backup(DirectoryInfo source, string target, FileTree packageParts)
     {
         if (!Directory.Exists(target)) Directory.CreateDirectory(target);
 
+        // there is nothing to compare, copy the folder right away
+        if (packageParts.Sources.Count == 0)
+        {
+            source.CopyTo(target);
+            return;
+        }
+
+        // copy all the new folders
         foreach (var dir in source.EnumerateDirectories("*", FileSystemUtils.RecursiveOptions))
         {
             var relativePath = dir.FullName.Replace(source.FullName, "");
 
-            if (packageParts.GetDirPath(relativePath) is null && !Directory.Exists(Path.Join(target, relativePath)))
+            if (packageParts.GetFullPath(relativePath + "\\") is null && !Directory.Exists(Path.Join(target, relativePath)))
                 dir.CopyTo(Path.Join(target, relativePath));
         }
 
@@ -96,7 +125,7 @@ public class BackupJob
             if (File.Exists(Path.Join(target, relativePath))) continue;
 
             // file was present in the previous backup packages
-            if (packageParts.GetFilePath(relativePath) is string path)
+            if (packageParts.GetFullPath(relativePath) is string path)
             {
                 var backupFile = new FileInfo(path);
 
