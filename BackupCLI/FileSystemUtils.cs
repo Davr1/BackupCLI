@@ -1,31 +1,7 @@
-﻿using System.Security.Cryptography;
-
-namespace BackupCLI;
-
-public static class FileSystemExtensions
-{
-    public static void CopyTo(this FileSystemInfo source, string destName, bool overwrite = false)
-    {
-        if (source.Attributes.HasFlag(FileAttributes.Directory))
-            ((DirectoryInfo)source).CopyTo(destName, overwrite);
-        else
-            ((FileInfo)source).CopyTo(destName, overwrite);
-    }
-
-    public static void CopyTo(this DirectoryInfo source, string destDirName, bool overwrite = false)
-    {
-        if (!overwrite && Directory.Exists(destDirName)) return;
-        
-        Directory.CreateDirectory(destDirName);
-
-        foreach (var entry in source.EnumerateFileSystemInfos("*", FileSystemUtils.TopLevelOptions))
-            entry.CopyTo(Path.Join(destDirName, entry.Name), overwrite);
-    }
-}
+﻿namespace BackupCLI;
 
 public static class FileSystemUtils
 {
-    private static readonly MD5 Hash = MD5.Create();
     public static readonly EnumerationOptions TopLevelOptions = new() { IgnoreInaccessible = true, MatchCasing = MatchCasing.CaseInsensitive };
     public static readonly EnumerationOptions RecursiveOptions = new() { IgnoreInaccessible = true, MatchCasing = MatchCasing.CaseInsensitive, RecurseSubdirectories = true };
 
@@ -58,10 +34,4 @@ public static class FileSystemUtils
 
     public static string GetRelativePath(DirectoryInfo dir, FileSystemInfo path)
         => path.FullName.Replace(dir.FullName, string.Empty);
-
-    public static string GetHash(this FileInfo file)
-    {
-        using var stream = file.OpenRead();
-        return BitConverter.ToString(Hash.ComputeHash(stream)).Replace("-", "").ToLower();
-    }
 }
