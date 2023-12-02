@@ -8,18 +8,16 @@ public static class FileSystemUtils
     public static readonly EnumerationOptions TopLevelOptions = new() { IgnoreInaccessible = true, MatchCasing = MatchCasing.CaseInsensitive };
     public static readonly EnumerationOptions RecursiveOptions = new() { IgnoreInaccessible = true, MatchCasing = MatchCasing.CaseInsensitive, RecurseSubdirectories = true };
 
-    public static void CopyTo(this DirectoryInfo source, string target)
+    public static void CopyTo(this DirectoryInfo source, string destFileName, bool overwrite)
     {
-        if (!Directory.Exists(target)) Directory.CreateDirectory(target);
+        if (overwrite || !Directory.Exists(destFileName)) Directory.CreateDirectory(destFileName);
+        else return;
         
         foreach (var file in source.EnumerateFiles("*", TopLevelOptions))
-        {
-            file.CopyTo(Path.Join(target, file.Name), true);
-            file.Attributes &= ~FileAttributes.Archive;
-        }
+            file.CopyTo(Path.Join(destFileName, file.Name), true);
 
         foreach (var dir in source.EnumerateDirectories("*", TopLevelOptions))
-            dir.CopyTo(Path.Join(target, dir.Name));
+            dir.CopyTo(Path.Join(destFileName, dir.Name), true);
     }
 
     public static bool AreDirectAncestors(DirectoryInfo left, DirectoryInfo right)

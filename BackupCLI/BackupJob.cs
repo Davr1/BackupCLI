@@ -81,18 +81,18 @@ public class BackupJob
         foreach (var sub in primaryTarget.GetDirectories("#*"))
         {
             var dest = Path.Join(target.FullName, sub.Name);
-            if (!Directory.Exists(dest)) sub.CopyTo(dest);
+            if (!Directory.Exists(dest)) sub.CopyTo(dest, true);
         }
     }
 
     private static List<DirectoryInfo> GetPackageContents(DirectoryInfo dir, string searchPattern = "*") =>
         dir.GetDirectories(searchPattern, FileSystemUtils.TopLevelOptions).OrderBy(d => d.CreationTime).ToList();
 
-    private static DirectoryInfo? GetFullBackup(DirectoryInfo dir, string sourceName) =>
-        GetPackageContents(dir, "#FULL").LastOrDefault(dir => dir.GetDirectories(sourceName).Any());
+    private static List<DirectoryInfo> GetBackups(DirectoryInfo dir, string sourceName, string searchPattern = "#*") =>
+        GetPackageContents(dir, searchPattern).Select(dir => dir.GetDirectories(sourceName).First()).ToList();
 
-    private static List<DirectoryInfo> GetBackups(DirectoryInfo dir, string sourceName) =>
-        GetPackageContents(dir, "#*").Select(dir => dir.GetDirectories(sourceName).First()).ToList();
+    private static DirectoryInfo? GetFullBackup(DirectoryInfo dir, string sourceName) =>
+        GetBackups(dir, sourceName, "#FULL*").LastOrDefault();
     
     private static void BackupDirectory(DirectoryInfo source, string target, FileTree packageParts)
     {
@@ -101,7 +101,7 @@ public class BackupJob
         // there is nothing to compare, copy the folder right away
         if (packageParts.Sources.Count == 0)
         {
-            source.CopyTo(target);
+            source.CopyTo(target, true);
             return;
         }
 
@@ -112,7 +112,7 @@ public class BackupJob
 
             if (!Directory.Exists(packageParts.GetFullPath(relativePath + "\\")) && 
                 !Directory.Exists(Path.Join(target, relativePath)))
-                dir.CopyTo(Path.Join(target, relativePath));
+                dir.CopyTo(Path.Join(target, relativePath), true);
         }
 
         foreach (var file in source.EnumerateFiles("*", FileSystemUtils.RecursiveOptions))
@@ -125,21 +125,11 @@ public class BackupJob
             // file was present in the previous backups
             if (packageParts.GetFile(relativePath) is FileInfo backupFile)
             {
-                // the archival flag is disabled, so the file has not changed
-                if (!file.Attributes.HasFlag(FileAttributes.Archive)) continue;
-
                 // compare metadata and hash
-                if (FileSystemUtils.AreIdentical(file, backupFile))
-                {
-                    file.Attributes &= ~FileAttributes.Archive;
-                    continue;
-                }
+                if (FileSystemUtils.AreIdentical(file, backupFile)) continue;
             }
 
-            // remove the archival flag from the original file
-            file.Attributes &= ~FileAttributes.Archive;
-
-            // finally, copy the file
+            // copy the file
             Directory.CreateDirectory(Path.Join(target, relativePath[..^file.Name.Length]));
             file.CopyTo(Path.Join(target, relativePath));
         }
