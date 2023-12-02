@@ -2,23 +2,32 @@
 
 namespace BackupCLI;
 
+public static class FileSystemExtensions
+{
+    public static void CopyTo(this FileSystemInfo source, string destName, bool overwrite = false)
+    {
+        if (source.Attributes.HasFlag(FileAttributes.Directory))
+            ((DirectoryInfo)source).CopyTo(destName, overwrite);
+        else
+            ((FileInfo)source).CopyTo(destName, overwrite);
+    }
+
+    public static void CopyTo(this DirectoryInfo source, string destDirName, bool overwrite = false)
+    {
+        if (!overwrite && Directory.Exists(destDirName)) return;
+        
+        Directory.CreateDirectory(destDirName);
+
+        foreach (var entry in source.EnumerateFileSystemInfos("*", FileSystemUtils.TopLevelOptions))
+            entry.CopyTo(Path.Join(destDirName, entry.Name), overwrite);
+    }
+}
+
 public static class FileSystemUtils
 {
     private static readonly MD5 Hash = MD5.Create();
     public static readonly EnumerationOptions TopLevelOptions = new() { IgnoreInaccessible = true, MatchCasing = MatchCasing.CaseInsensitive };
     public static readonly EnumerationOptions RecursiveOptions = new() { IgnoreInaccessible = true, MatchCasing = MatchCasing.CaseInsensitive, RecurseSubdirectories = true };
-
-    public static void CopyTo(this DirectoryInfo source, string destFileName, bool overwrite)
-    {
-        if (overwrite || !Directory.Exists(destFileName)) Directory.CreateDirectory(destFileName);
-        else return;
-        
-        foreach (var file in source.EnumerateFiles("*", TopLevelOptions))
-            file.CopyTo(Path.Join(destFileName, file.Name), true);
-
-        foreach (var dir in source.EnumerateDirectories("*", TopLevelOptions))
-            dir.CopyTo(Path.Join(destFileName, dir.Name), true);
-    }
 
     public static bool AreDirectAncestors(DirectoryInfo left, DirectoryInfo right)
     {
@@ -42,7 +51,8 @@ public static class FileSystemUtils
     }
 
     public static bool AreIdentical(FileInfo left, FileInfo right) =>
-        (left.Length == right.Length && left.LastWriteTime == right.LastWriteTime) || left.GetHash() == right.GetHash();
+        left.Exists && right.Exists && 
+        ((left.Length == right.Length && left.LastWriteTime == right.LastWriteTime) || left.GetHash() == right.GetHash());
 
     public static DirectoryInfo NormalizePath(string path) => new DirectoryInfo(Path.Join(path, ".").ToLower());
 
