@@ -1,7 +1,8 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using BackupCLI.Helpers;
 
-namespace BackupCLI;
+namespace BackupCLI.Backup;
 
 public static class JsonManipulator
 {

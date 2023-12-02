@@ -2,7 +2,7 @@
 using System.Text.Json.Serialization;
 using System.Text.Json;
 
-namespace BackupCLI;
+namespace BackupCLI.Helpers;
 
 /// <summary>
 /// Provides non-null type checking and default value support for deserialization using the built-in JSON library. 

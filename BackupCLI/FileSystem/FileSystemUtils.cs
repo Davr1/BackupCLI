@@ -1,4 +1,4 @@
-﻿namespace BackupCLI;
+﻿namespace BackupCLI.FileSystem;
 
 public static class FileSystemUtils
 {
@@ -15,7 +15,7 @@ public static class FileSystemUtils
             if (_left.Parent.FullName == right.FullName) return true;
             _left = _left.Parent;
         }
-        
+
         DirectoryInfo _right = right;
         while (_right.Parent is not null)
         {
@@ -27,8 +27,8 @@ public static class FileSystemUtils
     }
 
     public static bool AreIdentical(FileInfo left, FileInfo right) =>
-        left.Exists && right.Exists && 
-        ((left.Length == right.Length && left.LastWriteTime == right.LastWriteTime) || left.GetHash() == right.GetHash());
+        left.Exists && right.Exists &&
+        (left.Length == right.Length && left.LastWriteTime == right.LastWriteTime || left.GetHash() == right.GetHash());
 
     public static DirectoryInfo NormalizePath(string path) => new DirectoryInfo(Path.Join(path, ".").ToLower());
 

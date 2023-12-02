@@ -1,6 +1,7 @@
-﻿using Quartz;
+﻿using BackupCLI.FileSystem;
+using Quartz;
 
-namespace BackupCLI;
+namespace BackupCLI.Backup;
 
 public class BackupJob
 {
@@ -78,11 +79,11 @@ public class BackupJob
 
         // this speeds up the process by using the simplest algorithm to mirror the primary target
         foreach (var target in Targets.Skip(1))
-        foreach (var sub in primaryTarget.GetDirectories("#*"))
-        {
-            var dest = Path.Join(target.FullName, sub.Name);
-            if (!Directory.Exists(dest)) sub.CopyTo(dest, true);
-        }
+            foreach (var sub in primaryTarget.GetDirectories("#*"))
+            {
+                var dest = Path.Join(target.FullName, sub.Name);
+                if (!Directory.Exists(dest)) sub.CopyTo(dest, true);
+            }
     }
 
     private static List<DirectoryInfo> GetPackageContents(DirectoryInfo dir, string searchPattern = "*") =>
@@ -93,7 +94,7 @@ public class BackupJob
 
     private static DirectoryInfo? GetFullBackup(DirectoryInfo dir, string sourceName) =>
         GetBackups(dir, sourceName, "#FULL*").LastOrDefault();
-    
+
     private static void BackupDirectory(DirectoryInfo source, string target, FileTree packageParts)
     {
         if (!Directory.Exists(target)) Directory.CreateDirectory(target);
@@ -110,7 +111,7 @@ public class BackupJob
         {
             string relativePath = FileSystemUtils.GetRelativePath(source, dir);
 
-            if (!Directory.Exists(packageParts.GetFullPath(relativePath + "\\")) && 
+            if (!Directory.Exists(packageParts.GetFullPath(relativePath + "\\")) &&
                 !Directory.Exists(Path.Join(target, relativePath)))
                 dir.CopyTo(Path.Join(target, relativePath), true);
         }

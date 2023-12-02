@@ -1,6 +1,6 @@
 ﻿using System.Security.Cryptography;
 
-namespace BackupCLI;
+namespace BackupCLI.FileSystem;
 public static class FileSystemExtensions
 {
     private static readonly MD5 Hash = MD5.Create();

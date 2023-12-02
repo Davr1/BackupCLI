@@ -1,4 +1,4 @@
-﻿namespace BackupCLI;
+﻿namespace BackupCLI.FileSystem;
 
 public class FileTree
 {
@@ -29,13 +29,13 @@ public class FileTree
         if (Sources.Count <= 1) return;
 
         foreach (var (dir, index) in Sources.Select((dir, i) => (dir, i)))
-        foreach (var fsInfo in dir.EnumerateFileSystemInfos("*", FileSystemUtils.RecursiveOptions))
-        {
-            string relativePath = fsInfo.FullName.Replace(dir.FullName, "").ToLower();
+            foreach (var fsInfo in dir.EnumerateFileSystemInfos("*", FileSystemUtils.RecursiveOptions))
+            {
+                string relativePath = fsInfo.FullName.Replace(dir.FullName, "").ToLower();
 
-            if (fsInfo.Attributes.HasFlag(FileAttributes.Directory)) relativePath += "\\";
+                if (fsInfo.Attributes.HasFlag(FileAttributes.Directory)) relativePath += "\\";
 
-            Tree[relativePath] = index;
-        }
+                Tree[relativePath] = index;
+            }
     }
 }

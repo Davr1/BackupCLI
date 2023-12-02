@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace BackupCLI;
+namespace BackupCLI.Helpers;
 
 public class CustomLogger(string path) : ILogger
 {
