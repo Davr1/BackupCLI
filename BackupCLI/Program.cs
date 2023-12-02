@@ -9,7 +9,7 @@ public class Program
 
     static void Main(string[] args)
     {
-        if (!JsonManipulator.TryLoadFile("../../../example.json", out List<BackupJobJson> json)) return;
+        if (!JsonManipulator.TryLoadFile("../../../example.json", out List<BackupJobJson>? json)) return;
 
         List<BackupJob> jobs = json
             .Select(obj =>

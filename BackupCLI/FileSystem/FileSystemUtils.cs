@@ -26,9 +26,31 @@ public static class FileSystemUtils
         return false;
     }
 
-    public static bool AreIdentical(FileInfo left, FileInfo right) =>
-        left.Exists && right.Exists &&
-        (left.Length == right.Length && left.LastWriteTime == right.LastWriteTime || left.GetHash() == right.GetHash());
+    public static bool AreIdentical(FileInfo left, FileInfo right)
+    {
+        if (!left.Exists || !right.Exists) return false;
+        if (left.Length == right.Length && left.LastWriteTime == right.LastWriteTime) return true;
+
+        int size = Environment.Is64BitProcess ? sizeof(long) : sizeof(int);
+        int iterations = (int)Math.Ceiling((double)left.Length / size);
+
+        using var leftStream = left.OpenRead();
+        using var rightStream = right.OpenRead();
+
+        byte[] leftBuffer = new byte[size];
+        byte[] rightBuffer = new byte[size];
+
+        for (int i = 0; i < iterations; i++)
+        {
+            leftStream.Read(leftBuffer, 0, size);
+            rightStream.Read(rightBuffer, 0, size);
+
+            if (BitConverter.ToInt64(leftBuffer, 0) != BitConverter.ToInt64(rightBuffer, 0))
+                return false;
+        }
+
+        return true;
+    }
 
     public static DirectoryInfo FromPath(string path)
         => new (Path.TrimEndingDirectorySeparator(path) + "\\");

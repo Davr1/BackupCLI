@@ -1,11 +1,7 @@
-﻿using System.Security.Cryptography;
-
-namespace BackupCLI.FileSystem;
+﻿namespace BackupCLI.FileSystem;
 
 public static class FileSystemExtensions
 {
-    private static readonly MD5 Hash = MD5.Create();
-
     public static FileSystemInfo? CopyTo(this FileSystemInfo source, string destName, bool overwrite = false) =>
         source switch
         {
@@ -22,11 +18,5 @@ public static class FileSystemExtensions
             entry.CopyTo(Path.Join(destDirName, entry.Name), overwrite);
 
         return dir;
-    }
-
-    public static string GetHash(this FileInfo file)
-    {
-        using var stream = file.OpenRead();
-        return BitConverter.ToString(Hash.ComputeHash(stream)).Replace("-", "").ToLower();
     }
 }
