@@ -33,5 +33,5 @@ public static class FileSystemUtils
     public static DirectoryInfo NormalizePath(string path) => new DirectoryInfo(Path.Join(path, ".").ToLower());
 
     public static string GetRelativePath(DirectoryInfo dir, FileSystemInfo path)
-        => path.FullName.Replace(dir.FullName, string.Empty);
+        => path.FullName.Replace(dir.FullName + "\\", string.Empty);
 }

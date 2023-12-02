@@ -1,9 +1,14 @@
-﻿namespace BackupCLI;
+﻿using Microsoft.Extensions.Logging;
+
+namespace BackupCLI;
 
 public class Program
 {
+    public static readonly ILogger Logger = new CustomLogger("latest.log");
+
     static void Main(string[] args)
     {
+
         //todo: rewrite this entire file
         List<BackupJobJson> json;
         try
@@ -12,7 +17,7 @@ public class Program
         }
         catch (Exception e)
         {
-            ErrorLog(e);
+            Error(e);
             return;
         }
 
@@ -27,7 +32,7 @@ public class Program
                 catch (Exception e)
                 {
                     Console.WriteLine("Job creation skipped:");
-                    ErrorLog(e);
+                    Error(e);
                     return null;
                 }
                 Console.WriteLine($"Job created with {job.Sources.Count} sources and {job.Targets.Count} targets.");
@@ -42,15 +47,6 @@ public class Program
         Console.WriteLine($"Took {watch.ElapsedMilliseconds} ms");
     }
 
-    public static void ErrorLog(Exception e)
-    {
-        #if DEBUG
-            Console.Write($"{e.GetType().Name} occurred [{e.Source}]:\n");
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(e.StackTrace);
-            Console.ResetColor();
-        #endif
-
-        Console.WriteLine(e.Message);
-    }
+    public static void Error(Exception e) 
+        => Logger.LogError(0, e, e.Message);
 }

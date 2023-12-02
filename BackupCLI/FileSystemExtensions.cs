@@ -25,6 +25,7 @@ public static class FileSystemExtensions
 
         return new DirectoryInfo(destDirName);
     }
+
     public static string GetHash(this FileInfo file)
     {
         using var stream = file.OpenRead();
