@@ -1,6 +1,7 @@
 ﻿using System.Security.Cryptography;
 
 namespace BackupCLI.FileSystem;
+
 public static class FileSystemExtensions
 {
     private static readonly MD5 Hash = MD5.Create();
@@ -15,15 +16,12 @@ public static class FileSystemExtensions
 
     public static DirectoryInfo CopyTo(this DirectoryInfo source, string destDirName, bool overwrite = false)
     {
-        if (overwrite || !Directory.Exists(destDirName))
-        {
-            Directory.CreateDirectory(destDirName);
+        var dir = Directory.CreateDirectory(destDirName);
 
-            foreach (var entry in source.EnumerateFileSystemInfos("*", FileSystemUtils.TopLevelOptions))
-                entry.CopyTo(Path.Join(destDirName, entry.Name), overwrite);
-        }
+        foreach (var entry in source.EnumerateFileSystemInfos("*", FileSystemUtils.TopLevelOptions))
+            entry.CopyTo(Path.Join(destDirName, entry.Name), overwrite);
 
-        return new DirectoryInfo(destDirName);
+        return dir;
     }
 
     public static string GetHash(this FileInfo file)

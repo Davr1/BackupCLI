@@ -30,8 +30,9 @@ public static class FileSystemUtils
         left.Exists && right.Exists &&
         (left.Length == right.Length && left.LastWriteTime == right.LastWriteTime || left.GetHash() == right.GetHash());
 
-    public static DirectoryInfo NormalizePath(string path) => new DirectoryInfo(Path.Join(path, ".").ToLower());
+    public static DirectoryInfo FromPath(string path)
+        => new (Path.TrimEndingDirectorySeparator(path) + "\\");
 
     public static string GetRelativePath(DirectoryInfo dir, FileSystemInfo path)
-        => path.FullName.Replace(dir.FullName + "\\", string.Empty);
+        => Path.GetRelativePath(dir.FullName, path.FullName);
 }

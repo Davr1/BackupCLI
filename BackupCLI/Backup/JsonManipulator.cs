@@ -25,8 +25,8 @@ public static class JsonManipulator
 
 public class BackupJobJson : ValidJson
 {
-    public List<string> Sources { get; set; } = new();
-    public List<string> Targets { get; set; } = new();
+    public List<string> Sources { get; set; } = [];
+    public List<string> Targets { get; set; } = [];
     public string Timing { get; set; } = null!;
     public BackupRetention Retention { get; set; } = new();
     public BackupMethod Method { get; set; } = BackupMethod.Full;

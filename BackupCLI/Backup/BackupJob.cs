@@ -16,13 +16,13 @@ public class BackupJob
         foreach (var source in json.Sources.Where(s => !Directory.Exists(s)))
             throw new DirectoryNotFoundException($"Source directory {source} does not exist.");
 
-        Sources = json.Sources.Select(FileSystemUtils.NormalizePath).ToList();
+        Sources = json.Sources.Select(FileSystemUtils.FromPath).ToList();
         if (Sources.Count == 0) throw new ArgumentException("Sources list cannot be empty.");
 
         foreach (var target in json.Targets.Where(t => !Directory.Exists(t)))
             Directory.CreateDirectory(target);
 
-        Targets = json.Targets.Select(FileSystemUtils.NormalizePath).ToList();
+        Targets = json.Targets.Select(FileSystemUtils.FromPath).ToList();
         if (Targets.Count == 0) throw new ArgumentException("Targets list cannot be empty.");
 
         if (Targets.Any(t => Sources.Any(s => FileSystemUtils.AreDirectAncestors(s, t))))
@@ -97,7 +97,7 @@ public class BackupJob
 
     private static void BackupDirectory(DirectoryInfo source, string target, FileTree packageParts)
     {
-        if (!Directory.Exists(target)) Directory.CreateDirectory(target);
+        Directory.CreateDirectory(target);
 
         // there is nothing to compare, copy the folder right away
         if (packageParts.Sources.Count == 0)

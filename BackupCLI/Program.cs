@@ -1,4 +1,5 @@
 ﻿using BackupCLI.Backup;
+using BackupCLI.Helpers;
 using Microsoft.Extensions.Logging;
 
 namespace BackupCLI;
@@ -9,7 +10,6 @@ public class Program
 
     static void Main(string[] args)
     {
-
         //todo: rewrite this entire file
         List<BackupJobJson> json;
         try
