@@ -1,53 +1,25 @@
 ﻿using BackupCLI.Backup;
 using BackupCLI.Helpers;
-using Microsoft.Extensions.Logging;
 
 namespace BackupCLI;
 
 public class Program
 {
-    public static readonly ILogger Logger = new CustomLogger("latest.log");
+    public static readonly CustomLogger Logger = new("latest.log");
 
     static void Main(string[] args)
     {
-        //todo: rewrite this entire file
-        List<BackupJobJson> json;
-        try
-        {
-            json = JsonManipulator.LoadFile("../../../example.json");
-        }
-        catch (Exception e)
-        {
-            Error(e);
-            return;
-        }
+        if (!JsonManipulator.TryLoadFile("../../../example.json", out List<BackupJobJson> json)) return;
 
         List<BackupJob> jobs = json
             .Select(obj =>
             {
-                BackupJob job;
-                try
-                {
-                    job = new BackupJob(obj);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Job creation skipped:");
-                    Error(e);
-                    return null;
-                }
-                Console.WriteLine($"Job created with {job.Sources.Count} sources and {job.Targets.Count} targets.");
+                BackupJob.TryCreate(obj, out BackupJob? job);
                 return job;
             })
             .Where(job => job is not null)
-            .ToList()!;
+            .ToList();
 
-        var watch = System.Diagnostics.Stopwatch.StartNew();
         jobs.ForEach(job => job.PerformBackup());
-        watch.Stop();
-        Console.WriteLine($"Took {watch.ElapsedMilliseconds} ms");
     }
-
-    public static void Error(Exception e) 
-        => Logger.LogError(0, e, e.Message);
 }

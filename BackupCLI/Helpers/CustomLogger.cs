@@ -19,8 +19,11 @@ public class CustomLogger(string path) : ILogger
         logFile.WriteLine(message);
     }
 
-    public void Dispose()
-    {
-        logFile.Dispose();
-    }
+    public void Dispose() => logFile.Dispose();
+
+    public void Error(Exception e) 
+        => this.LogError(0, e, e.Message);
+
+    public void Info(string message)
+        => this.LogInformation(message);
 }

@@ -43,6 +43,24 @@ public class BackupJob
         Method = json.Method;
     }
 
+    public static bool TryCreate(BackupJobJson json, out BackupJob? job)
+    {
+        job = default;
+
+        try
+        {
+            job = new BackupJob(json);
+            Program.Logger.Info($"Job created: {{ {string.Join(", ", job.Sources)} }} -> {{ {string.Join(", ", job.Targets)} }}");
+            return true;
+        }
+        catch (Exception e)
+        {
+            Program.Logger.Info("Job creation skipped");
+            Program.Logger.Error(e);
+            return false;
+        }
+    }
+
     public void PerformBackup()
     {
         string dirName = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
@@ -74,7 +92,20 @@ public class BackupJob
 
             string target = Path.Join(primaryTarget.FullName, dirName, source.Name);
 
-            BackupDirectory(source, target, packageParts);
+            try
+            {
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+
+                BackupDirectory(source, target, packageParts);
+
+                watch.Stop();
+                Program.Logger.Info($"Took {watch.ElapsedMilliseconds} ms");
+            }
+            catch (Exception e)
+            {
+                Program.Logger.Info("Backup failed");
+                Program.Logger.Error(e);
+            }
         }
 
         // this speeds up the process by using the simplest algorithm to mirror the primary target

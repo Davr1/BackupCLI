@@ -21,6 +21,22 @@ public static class JsonManipulator
 
         return backupJobs;
     }
+
+    public static bool TryLoadFile(string path, out List<BackupJobJson>? jobs)
+    {
+        jobs = default;
+
+        try
+        {
+            jobs = LoadFile(path);
+            return true;
+        }
+        catch (Exception e)
+        {
+            Program.Logger.Error(e);
+            return false;
+        }
+    }
 }
 
 public class BackupJobJson : ValidJson
