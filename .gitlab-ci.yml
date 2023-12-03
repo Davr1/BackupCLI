@@ -14,5 +14,6 @@ build:
   artifacts:
     paths:
       - ./*.exe
+    expire_in: 1 day
   only:
     - master
