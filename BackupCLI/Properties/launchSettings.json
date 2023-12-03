@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "BackupCLI": {
+      "commandName": "Project",
+      "commandLineArgs": "-i ../../../example.json"
+    }
+  }
+}
