@@ -1,7 +1,7 @@
 [
   {
     "sources": [ "C:\\autodesk" ],
-    "targets": [ "C:\\acad" ],
+    "targets": [ "C:\\acad2" ],
     "method": "differential",
     "timing": "5 4 * * *",
     "retention": {

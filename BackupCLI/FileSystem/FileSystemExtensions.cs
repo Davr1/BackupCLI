@@ -1,5 +1,8 @@
 ﻿namespace BackupCLI.FileSystem;
 
+/// <summary>
+/// Extension methods for <see cref="FileSystemInfo"/>.
+/// </summary>
 public static class FileSystemExtensions
 {
     public static FileSystemInfo? CopyTo(this FileSystemInfo source, string destName, bool overwrite = false) =>

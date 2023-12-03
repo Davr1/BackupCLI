@@ -1,8 +1,19 @@
 ﻿namespace BackupCLI.FileSystem;
 
+/// <summary>
+/// Simulated flattened file system tree with references to the actual files from multiple sources.
+/// </summary>
 public class FileTree
 {
     public List<DirectoryInfo> Sources { get; }
+
+    /// <summary>
+    /// Relative paths mapped to the index of the source directory they belong to. Directory paths have a trailing backslash.
+    /// <example>
+    /// <code>Tree["/some/file/path"]</code>
+    /// => <c>2</c>
+    /// </example>
+    /// </summary>
     public Dictionary<string, int> Tree { get; } = new();
 
     public string GetFullPath(int index, string relativePath) => Path.Join(Sources[index].FullName, relativePath);
