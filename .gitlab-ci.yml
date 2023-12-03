@@ -1,0 +1,18 @@
+image: mcr.microsoft.com/dotnet/sdk:8.0
+
+stages:
+  - build
+
+build:
+  stage: build
+  script:
+    - "dotnet publish -p:PublishProfile=Build"
+    - "dotnet publish -p:PublishProfile=BuildStandalone"
+  after_script:
+    - "mv BackupCLI/publish/portable/BackupCLI.exe ./BackupCLI_Portable.exe"
+    - "mv BackupCLI/publish/standalone/BackupCLI.exe ./BackupCLI_Standalone.exe"
+  artifacts:
+    paths:
+      - ./*.exe
+  only:
+    - master
