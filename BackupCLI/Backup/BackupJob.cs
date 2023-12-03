@@ -65,6 +65,8 @@ public class BackupJob
     {
         string dirName = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
 
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+
         var primaryTarget = Targets.First();
 
         foreach (var source in Sources)
@@ -94,12 +96,7 @@ public class BackupJob
 
             try
             {
-                var watch = System.Diagnostics.Stopwatch.StartNew();
-
                 BackupDirectory(source, target, packageParts);
-
-                watch.Stop();
-                Program.Logger.Info($"Took {watch.ElapsedMilliseconds} ms");
             }
             catch (Exception e)
             {
@@ -115,6 +112,9 @@ public class BackupJob
                 var dest = Path.Join(target.FullName, sub.Name);
                 if (!Directory.Exists(dest)) sub.TryCopyTo(dest, true);
             }
+
+        watch.Stop();
+        Program.Logger.Info($"Took {watch.ElapsedMilliseconds} ms");
     }
 
     private static List<DirectoryInfo> GetPackageContents(DirectoryInfo dir, string searchPattern = "*") =>
