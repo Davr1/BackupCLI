@@ -351,3 +351,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Other
+BackupCLI/example.json
+launchSettings.json
