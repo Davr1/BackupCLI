@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Globalization;
+using Colors.Net;
+using Microsoft.Extensions.Logging;
+using static Colors.Net.StringStaticMethods;
 
 namespace BackupCLI.Helpers;
 
@@ -12,11 +15,19 @@ public class CustomLogger(string path, bool quiet) : ILogger
 
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
     {
-        string message = $"[{DateTime.Now}] [{logLevel}] {formatter(state, exception)}";
+        string time = DateTime.Now.ToString(CultureInfo.InvariantCulture);
 
-        if (!quiet) Console.WriteLine(message);
 
-        logFile.WriteLine(message);
+        if (!quiet)
+        {
+            var timeString = DarkGray($"[{time}]");
+            var levelString = GetColor(logLevel)($"[{logLevel}]");
+            var messageString = formatter(state, exception);
+
+            ColoredConsole.WriteLine($"{timeString} {levelString} {messageString}");
+        }
+
+        logFile.WriteLine($"[{time}] [{logLevel}] {formatter(state, exception)}");
     }
 
     public void Dispose() => logFile.Dispose();
@@ -26,4 +37,13 @@ public class CustomLogger(string path, bool quiet) : ILogger
 
     public void Info(string message)
         => this.LogInformation(message);
+
+    private static Func<string, RichString> GetColor(LogLevel logLevel) => logLevel switch
+    {
+        LogLevel.Information => Cyan,
+        LogLevel.Warning => Yellow,
+        LogLevel.Error => Red,
+        LogLevel.Critical => DarkRed,
+        _ => DarkGray
+    };
 }

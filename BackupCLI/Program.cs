@@ -33,15 +33,15 @@ public class Program
 
     public static void Execute(Options options)
     {
-        if (!JsonManipulator.TryLoadFile(options.File, JsonOptions, out JsonList<BackupJobJson>? json)) return;
-
         Logger = new CustomLogger(options.DebugLog, options.Quiet);
+
+        if (!JsonManipulator.TryLoadFile(options.File, JsonOptions, out JsonList<BackupJobJson>? json)) return;
 
         Logger.Info("Loading jobs...");
         List<BackupJob> jobs = json.Items
             .Select(obj =>
             {
-                BackupJob.TryCreate((BackupJobJson)obj, out BackupJob? job);
+                BackupJob.TryCreate(obj, out BackupJob? job);
                 return job;
             })
             .Where(job => job is not null)

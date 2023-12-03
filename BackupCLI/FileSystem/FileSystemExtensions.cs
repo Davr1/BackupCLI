@@ -13,12 +13,26 @@ public static class FileSystemExtensions
             _ => null
         };
 
+    public static bool TryCopyTo(this FileSystemInfo source, string destName, bool overwrite = false)
+    {
+        try
+        {
+            source.CopyTo(destName, overwrite);
+            return true;
+        }
+        catch (Exception e)
+        {
+            Program.Logger.Error(e);
+            return false;
+        }
+    }
+
     public static DirectoryInfo CopyTo(this DirectoryInfo source, string destDirName, bool overwrite = false)
     {
         var dir = Directory.CreateDirectory(destDirName);
 
         foreach (var entry in source.EnumerateFileSystemInfos("*", FileSystemUtils.TopLevelOptions))
-            entry.CopyTo(Path.Join(destDirName, entry.Name), overwrite);
+            entry.TryCopyTo(Path.Join(destDirName, entry.Name), overwrite);
 
         return dir;
     }

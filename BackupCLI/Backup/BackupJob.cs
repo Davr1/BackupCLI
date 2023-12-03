@@ -113,7 +113,7 @@ public class BackupJob
             foreach (var sub in primaryTarget.GetDirectories("#*"))
             {
                 var dest = Path.Join(target.FullName, sub.Name);
-                if (!Directory.Exists(dest)) sub.CopyTo(dest, true);
+                if (!Directory.Exists(dest)) sub.TryCopyTo(dest, true);
             }
     }
 
@@ -133,7 +133,7 @@ public class BackupJob
         // there is nothing to compare, copy the folder right away
         if (packageParts.Sources.Count == 0)
         {
-            source.CopyTo(target, true);
+            source.TryCopyTo(target, true);
             return;
         }
 
@@ -144,7 +144,7 @@ public class BackupJob
 
             if (!Directory.Exists(packageParts.GetFullPath(relativePath + "\\")) &&
                 !Directory.Exists(Path.Join(target, relativePath)))
-                dir.CopyTo(Path.Join(target, relativePath), true);
+                dir.TryCopyTo(Path.Join(target, relativePath), true);
         }
 
         foreach (var file in source.EnumerateFiles("*", FileSystemUtils.RecursiveOptions))
@@ -163,7 +163,7 @@ public class BackupJob
 
             // copy the file
             Directory.CreateDirectory(Path.Join(target, relativePath[..^file.Name.Length]));
-            file.CopyTo(Path.Join(target, relativePath));
+            file.TryCopyTo(Path.Join(target, relativePath));
         }
     }
 }
