@@ -13,21 +13,25 @@ public class CustomLogger(string path, bool quiet) : ILogger
 
     public bool IsEnabled(LogLevel logLevel) => true;
 
-    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception, string> _)
     {
         string time = DateTime.Now.ToString(CultureInfo.InvariantCulture);
-
 
         if (!quiet)
         {
             var timeString = DarkGray($"[{time}]");
             var levelString = GetColor(logLevel)($"[{logLevel}]");
-            var messageString = formatter(state, exception);
 
-            ColoredConsole.WriteLine($"{timeString} {levelString} {messageString}");
+            #if DEBUG
+                string? message = exception is null ? state?.ToString() : exception.ToString();
+            #else
+                string? message = state?.ToString();
+            #endif
+
+            ColoredConsole.WriteLine($"{timeString} {levelString} {message}");
         }
 
-        logFile.WriteLine($"[{time}] [{logLevel}] {formatter(state, exception)}");
+        logFile.WriteLine($"[{time}] [{logLevel}] {exception}");
     }
 
     public void Dispose() => logFile.Dispose();

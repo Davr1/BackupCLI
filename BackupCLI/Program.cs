@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
-using BackupCLI.Backup;
+﻿using BackupCLI.Backup;
 using BackupCLI.Helpers;
 using CommandLine;
 
@@ -20,13 +18,6 @@ public class Program
         public bool Quiet { get; set; } = false;
     }
 
-    public static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter(), new JsonListConverter<BackupJobJson>() }
-    };
-
     public static CustomLogger Logger { get; set; } = null!;
 
     private static void Main(string[] args) => Parser.Default.ParseArguments<Options>(args).WithParsed(Execute);
@@ -34,18 +25,13 @@ public class Program
     public static void Execute(Options options)
     {
         Logger = new CustomLogger(options.DebugLog, options.Quiet);
-
-        if (!JsonManipulator.TryLoadFile(options.File, JsonOptions, out JsonList<BackupJobJson>? json)) return;
-
+        
         Logger.Info("Loading jobs...");
-        List<BackupJob> jobs = json.Items
-            .Select(obj =>
-            {
-                BackupJob.TryCreate(obj, out BackupJob? job);
-                return job;
-            })
-            .Where(job => job is not null)
-            .ToList();
+
+        if (!JsonManipulator.TryLoadFile(options.File, BackupJobJsonConverter.Options, out List<BackupJob>? jobs)) return;
+
+        Logger.Info($"Sucsessfully loaded {jobs!.Count} jobs");
+
         jobs.ForEach(job => job.PerformBackup());
     }
 }
