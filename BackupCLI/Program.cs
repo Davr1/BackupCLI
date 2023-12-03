@@ -12,6 +12,12 @@ public class Program
     {
         [Option('i', "input", Required = true, HelpText = "Path to the json file.")]
         public string File { get; set; } = null!;
+
+        [Option('d', "debug", HelpText = "Path to a log file.")]
+        public string DebugLog { get; set; } = "latest.log";
+
+        [Option('q', "quiet", HelpText = "Suppresses console logs.")]
+        public bool Quiet { get; set; } = false;
     }
 
     public static readonly JsonSerializerOptions JsonOptions = new()
@@ -21,7 +27,7 @@ public class Program
         Converters = { new JsonStringEnumConverter(), new JsonListConverter<BackupJobJson>() }
     };
 
-    public static readonly CustomLogger Logger = new("latest.log");
+    public static CustomLogger Logger { get; set; } = null!;
 
     private static void Main(string[] args) => Parser.Default.ParseArguments<Options>(args).WithParsed(Execute);
 
@@ -29,6 +35,9 @@ public class Program
     {
         if (!JsonManipulator.TryLoadFile(options.File, JsonOptions, out JsonList<BackupJobJson>? json)) return;
 
+        Logger = new CustomLogger(options.DebugLog, options.Quiet);
+
+        Logger.Info("Loading jobs...");
         List<BackupJob> jobs = json.Items
             .Select(obj =>
             {

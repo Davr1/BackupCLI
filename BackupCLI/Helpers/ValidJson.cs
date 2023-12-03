@@ -56,7 +56,6 @@ public class JsonList<TValue>(List<TValue> items) : ValidJson where TValue : Val
 /// <summary>
 /// Used in the <see cref="JsonSerializerOptions"/> configuration object.
 /// </summary>
-/// <typeparam name="TValue"></typeparam>
 public class JsonListConverter<TValue> : JsonConverter<JsonList<TValue>> where TValue : ValidJson
 {
     public override JsonList<TValue> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

@@ -2,7 +2,7 @@
 
 namespace BackupCLI.Helpers;
 
-public class CustomLogger(string path) : ILogger
+public class CustomLogger(string path, bool quiet) : ILogger
 {
     private readonly StreamWriter logFile = new(path, append: true) { AutoFlush = true };
 
@@ -14,7 +14,7 @@ public class CustomLogger(string path) : ILogger
     {
         string message = $"[{DateTime.Now}] [{logLevel}] {formatter(state, exception)}";
 
-        Console.WriteLine(message);
+        if (!quiet) Console.WriteLine(message);
 
         logFile.WriteLine(message);
     }
