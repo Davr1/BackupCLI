@@ -14,7 +14,7 @@ public class FileTree
     /// => <c>2</c>
     /// </example>
     /// </summary>
-    public Dictionary<string, int> Tree { get; } = new();
+    private Dictionary<string, int> Tree { get; } = new();
 
     public string GetFullPath(int index, string relativePath) => Path.Join(Sources[index].FullName, relativePath);
 

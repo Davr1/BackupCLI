@@ -9,7 +9,7 @@ public class BackupJob
     public List<DirectoryInfo> Targets { get; set; } = null!;
     public CronExpression Timing { get; set; } = null!;
     public BackupRetention Retention { get; set; } = null!;
-    public BackupMethod Method { get; set; } = BackupMethod.Full;
+    public BackupMethod Method { get; set; } = default;
 
     public void PerformBackup()
     {

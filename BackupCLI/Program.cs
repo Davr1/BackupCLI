@@ -28,7 +28,7 @@ public class Program
         
         Logger.Info("Loading jobs...");
 
-        if (!JsonManipulator.TryLoadFile(options.File, BackupJobJsonConverter.Options, out List<BackupJob>? jobs)) return;
+        if (!JsonUtils.TryLoadFile(options.File, BackupJobJsonConverter.Options, out List<BackupJob>? jobs)) return;
 
         Logger.Info($"Sucsessfully loaded {jobs!.Count} jobs");
 

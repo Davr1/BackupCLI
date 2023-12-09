@@ -69,12 +69,11 @@ public static class FileSystemUtils
 
         return true;
     }
+    public static string NormalizePath(string path, bool isDir)
+        => Path.TrimEndingDirectorySeparator(path) + (isDir ? Path.DirectorySeparatorChar : "");
 
-    /// <returns>
-    /// <see cref="DirectoryInfo"/> with a trailing slash in the .FullName
-    /// </returns>
     public static DirectoryInfo FromPath(string path)
-        => new (Path.TrimEndingDirectorySeparator(path) + Path.DirectorySeparatorChar);
+        => new (NormalizePath(path, true));
 
     /// <summary>
     /// Strips the absolute path from the <paramref name="dir"/> and returns the relative path to <paramref name="path"/>.
