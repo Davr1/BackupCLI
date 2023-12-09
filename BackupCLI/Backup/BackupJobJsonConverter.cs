@@ -45,6 +45,9 @@ public class BackupJobJsonConverter : JsonConverter<BackupJob>
         // method
         backupJob.Method = root.DeserializeOrDefault<BackupMethod>("method", options: Options);
 
+        if (backupJob.Method == BackupMethod.Full)
+            backupJob.Retention.Size = 1;
+
         return backupJob;
     }
 

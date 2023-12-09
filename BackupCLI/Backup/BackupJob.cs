@@ -67,12 +67,15 @@ public class BackupJob
         Program.Logger.Info($"Took {watch.ElapsedMilliseconds} ms");
     }
 
+    //todo: move to separate class
     private static List<DirectoryInfo> GetPackageContents(DirectoryInfo dir, string searchPattern = "*") =>
         dir.GetDirectories(searchPattern, FileSystemUtils.TopLevelOptions).OrderBy(d => d.CreationTime).ToList();
 
+    //todo: move to separate class
     private static List<DirectoryInfo> GetBackups(DirectoryInfo dir, string sourceName, string searchPattern = "#*") =>
         GetPackageContents(dir, searchPattern).Select(dir => dir.GetDirectories(sourceName).First()).ToList();
 
+    //todo: move to separate class
     private static DirectoryInfo? GetFullBackup(DirectoryInfo dir, string sourceName) =>
         GetBackups(dir, sourceName, "#FULL*").LastOrDefault();
 
