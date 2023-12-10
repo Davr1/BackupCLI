@@ -33,11 +33,11 @@ public class FileTree
     public DirectoryInfo? GetDirectory(string relativePath)
         => GetFullPath(relativePath + "\\") is string path ? new(path) : null;
 
-    public FileTree(params DirectoryInfo[] sources) : this(sources.ToList()) { }
+    public FileTree(params DirectoryInfo[] sources) : this(sources.AsEnumerable()) { }
 
-    public FileTree(List<DirectoryInfo> sources)
+    public FileTree(IEnumerable<DirectoryInfo> sources)
     {
-        sources.ForEach(Add);
+        foreach (var source in sources) Add(source);
     }
 
     public void Add(DirectoryInfo source)

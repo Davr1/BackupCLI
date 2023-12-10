@@ -22,15 +22,21 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
         Json = json;
 
         foreach (var (path, hash) in Json.Paths)
-            if (!Contents.ContainsKey(path))
-                Contents[path] = new FileTree(GetBackupParts(hash));
+        {
+            if (Contents.ContainsKey(path)) continue;
+
+            var parts = GetBackupParts(hash);
+            Contents[path] = method == BackupMethod.Incremental ? new FileTree(parts) : new FileTree(parts.Take(1));
+        }
     }
 
     public (Package package, DirectoryInfo backup, Dictionary<string, DirectoryInfo> targets) CreateBackup()
     {
         var backups = new Dictionary<string, DirectoryInfo>();
 
-        var backupFolder = Folder.CreateSubdirectory($"{Method}-{DateTime.Now.Ticks}");
+        string backupName = $"{(Json.Parts.Count == 0 ? "FULL" : Method.ToString().ToUpper()[..4])}-{DateTime.Now.Ticks}";
+
+        var backupFolder = Folder.CreateSubdirectory(backupName);
 
         foreach (var (path, hash) in Json.Paths)
             backups[path] = backupFolder.CreateSubdirectory(hash);
