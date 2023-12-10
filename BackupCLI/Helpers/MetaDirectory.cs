@@ -13,6 +13,7 @@ public abstract class MetaDirectory<TJson> where TJson : class
     {
         WriteIndented = true,
         PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 

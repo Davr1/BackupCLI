@@ -3,24 +3,27 @@ using BackupCLI.Helpers;
 
 namespace BackupCLI.Backup;
 
-public class Package(DirectoryInfo folder, BackupRetention retention, BackupMethod method, Dictionary<string, string> sourcePaths)
-    : MetaDirectory<Dictionary<string, string>>(folder, "package.json", sourcePaths), IDisposable
+public class Package(DirectoryInfo folder, BackupRetention retention, BackupMethod method, PackageJson packageJson)
+    : MetaDirectory<PackageJson>(folder, "package.json", packageJson), IDisposable
 {
     public BackupRetention Retention { get; } = retention;
     public BackupMethod Method { get; } = method;
-    public int Size => Subdirectories.Count;
     public Dictionary<string, FileTree> Contents { get; } = new();
-    public Dictionary<string, string> SourcePaths { get; } = sourcePaths;
+    public PackageJson Json { get; private set; } = packageJson;
+    public int Size => Json.Parts.Count;
 
     public bool IsFull()
         => Size >= (Method == BackupMethod.Full ? 1 : Retention.Size);
 
-    protected override void SetProperties(Dictionary<string, string>? json)
+    protected override void SetProperties(PackageJson? json)
     {
         if (json is null) return;
 
-        foreach (var (path, hash) in SourcePaths)
-            Contents[path] = new FileTree(GetBackupParts(hash));
+        Json = json;
+
+        foreach (var (path, hash) in Json.Paths)
+            if (!Contents.ContainsKey(path))
+                Contents[path] = new FileTree(GetBackupParts(hash));
     }
 
     public (Package package, DirectoryInfo backup, Dictionary<string, DirectoryInfo> targets) CreateBackup()
@@ -29,10 +32,12 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
 
         var backupFolder = Folder.CreateSubdirectory($"{Method}-{DateTime.Now.Ticks}");
 
-        foreach (var (path, hash) in SourcePaths)
+        foreach (var (path, hash) in Json.Paths)
             backups[path] = backupFolder.CreateSubdirectory(hash);
+
+        Json.Parts.Add(backupFolder.Name);
         
-        SaveMetadata(sourcePaths);
+        SaveMetadata(Json);
 
         return (this, backupFolder, backups);
     }
@@ -40,9 +45,14 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
     public void Dispose() => Folder.Delete(true);
 
     public List<DirectoryInfo> GetBackupParts(string name)
-        => Folder
-            .EnumerateDirectories()
-            .Select(dir => new DirectoryInfo(Path.Join(dir.FullName, name)))
+        => Json.Parts
+            .Select(dir => new DirectoryInfo(Path.Join(Folder.FullName, dir, name)))
             .OrderBy(dir => dir.CreationTime)
             .ToList();
+}
+
+public class PackageJson
+{
+    public Dictionary<string, string> Paths { get; set; } = new();
+    public List<string> Parts { get; set; } = new();
 }

@@ -26,7 +26,7 @@ public class TargetDirectory(DirectoryInfo folder, BackupRetention retention, Ba
         var packageDir = new DirectoryInfo(Path.Join(Folder.FullName, name));
         var paths = SourcePaths.Select(s => (s, FileSystemUtils.GetHashedPath(s.ToLower(), true))).ToDictionary();
 
-        Packages.Enqueue(new Package(packageDir, Retention, Method, paths));
+        Packages.Enqueue(new Package(packageDir, Retention, Method, new() { Paths = paths }));
         
         if (update) SaveMetadata(Packages.Select(p => p.Folder.Name).ToList());
     }

@@ -22,7 +22,10 @@ public class BackupJob
 
         foreach (var source in Sources)
         {
-            var target = targets[source.FullName];
+            // only folders inside the current package.json will be copied
+            // if the configuration changes, the folder will be copied in the next package
+            if (!targets.TryGetValue(source.FullName, out var target)) continue;
+
             BackupDirectory(source, target.FullName, package.Contents[source.FullName]);
             package.Contents[source.FullName].Add(target);
         }
