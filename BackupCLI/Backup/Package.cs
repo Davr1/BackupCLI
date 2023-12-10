@@ -30,14 +30,12 @@ public class Package : IDisposable
         if (MetaFile.Exists) 
             foreach (var pkg in File.ReadAllLines(MetaFile.FullName))
             {
-                Console.WriteLine(pkg);
                 var parts = pkg.Split('|');
                 if (parts.Length != 2) continue;
                 var name = parts[0];
                 var hash = parts[1];
 
-                var parts2 = GetBackupParts(hash);
-                Contents[name] = new FileTree(parts2);
+                Contents[name] = new FileTree(GetBackupParts(hash));
             }
 
         SaveMeta();
@@ -51,7 +49,7 @@ public class Package : IDisposable
 
         foreach (var path in Paths)
         {
-            string name = /*$"{new DirectoryInfo(path).Name} {*/GetHashedPath(path, true)/*}"*/;
+            string name = GetHashedPath(path, true);
             
             backups[path] = backupFolder.CreateSubdirectory(name);
 
@@ -65,11 +63,8 @@ public class Package : IDisposable
     public void Dispose() => Folder.Delete(true);
 
     public void SaveMeta()
-    {
-        Program.Logger.Info("Saving meta");
-        Program.Logger.Info(string.Join(",", Paths));
-        File.WriteAllLines(MetaFile.FullName, Paths.Select(path => $"{path}|{GetHashedPath(path, true)}"));
-    }
+        => File.WriteAllLines(MetaFile.FullName, Paths.Select(path => $"{path}|{GetHashedPath(path, true)}"));
+
     public List<DirectoryInfo> GetBackupParts(string hash)
         => Folder.GetDirectories().Select(dir => new DirectoryInfo(Path.Join(dir.FullName, hash))).OrderBy(dir => dir.CreationTime).ToList();
 

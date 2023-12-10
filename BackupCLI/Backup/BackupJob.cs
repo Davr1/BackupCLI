@@ -30,10 +30,6 @@ public class BackupJob
             package.Contents[source.FullName].Add(target);
             package.SaveMeta();
         }
-        
-        //package.UpdateIndex(backup);
-
-        Console.WriteLine(targets.Count);
 
         watch.Stop();
         Program.Logger.Info($"Took {watch.ElapsedMilliseconds} ms");
@@ -41,7 +37,6 @@ public class BackupJob
 
     private static void BackupDirectory(DirectoryInfo source, string target, FileTree packageParts)
     {
-        Console.WriteLine($"Copying {source.FullName} to {target}");
         Directory.CreateDirectory(target);
 
         // there is nothing to compare, copy the folder right away
