@@ -17,6 +17,8 @@ public abstract class MetaDirectory<TJson> where TJson : class
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
+    public TJson Json { get; set; } = null!;
+
     protected MetaDirectory(DirectoryInfo folder, string metadataFileName = "meta.json", TJson? @default = default)
     {
         Folder = folder;
@@ -27,24 +29,25 @@ public abstract class MetaDirectory<TJson> where TJson : class
         LoadMetadata(@default);
     }
 
-    protected abstract void SetProperties(TJson? json);
+    protected virtual void OnLoad(TJson json) { }
 
     public void LoadMetadata(TJson? @default = default)
     {
         if (!MetadataFile.Exists)
         {
-            SetProperties(@default);
-            SaveMetadata(@default);
+            Json = @default!;
+            SaveMetadata(Json);
         }
-        else
+        else if (JsonUtils.TryLoadFile(MetadataFile.FullName, out TJson? output, Options))
         {
-            JsonUtils.TryLoadFile(MetadataFile.FullName, out TJson? output, Options);
-            SetProperties(output);
+            Json = output!;
         }
+
+        OnLoad(Json);
     }
 
-    public void SaveMetadata(TJson obj)
+    public void SaveMetadata(TJson? obj = null)
     {
-        JsonUtils.TryWriteFile(MetadataFile.FullName, obj, Options);
+        JsonUtils.TryWriteFile(MetadataFile.FullName, obj ?? Json, Options);
     }
 }

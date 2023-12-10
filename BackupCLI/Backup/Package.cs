@@ -9,18 +9,13 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
     public BackupRetention Retention { get; } = retention;
     public BackupMethod Method { get; } = method;
     public Dictionary<string, FileTree> Contents { get; } = new();
-    public PackageJson Json { get; private set; } = packageJson;
     public int Size => Json.Parts.Count;
 
     public bool IsFull()
         => Size >= (Method == BackupMethod.Full ? 1 : Retention.Size);
 
-    protected override void SetProperties(PackageJson? json)
+    protected override void OnLoad(PackageJson? json)
     {
-        if (json is null) return;
-
-        Json = json;
-
         foreach (var (path, hash) in Json.Paths)
         {
             if (Contents.ContainsKey(path)) continue;
@@ -30,7 +25,7 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
         }
     }
 
-    public (Package package, Dictionary<string, DirectoryInfo> targets) CreateBackup()
+    public Dictionary<string, DirectoryInfo> CreateBackup()
     {
         var backups = new Dictionary<string, DirectoryInfo>();
 
@@ -43,9 +38,9 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
 
         Json.Parts.Add(backupFolder.Name);
         
-        SaveMetadata(Json);
+        SaveMetadata();
 
-        return (this, backups);
+        return backups;
     }
 
     public void Dispose() => Folder.Delete(true);
@@ -61,4 +56,5 @@ public class PackageJson
 {
     public Dictionary<string, string> Paths { get; set; } = new();
     public List<string> Parts { get; set; } = new();
+    public DateTime LastWriteTime => DateTime.Now;
 }
