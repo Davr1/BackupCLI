@@ -19,9 +19,8 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
     {
         if (json is null) return;
 
-        foreach (var (path, hash) in json)
-            if (Directory.Exists(Path.Join(Folder.FullName, hash)))
-                Contents[path] = new FileTree(GetBackupParts(hash));
+        foreach (var (path, hash) in SourcePaths)
+            Contents[path] = new FileTree(GetBackupParts(hash));
     }
 
     public (Package package, DirectoryInfo backup, Dictionary<string, DirectoryInfo> targets) CreateBackup()
@@ -31,12 +30,9 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
         var backupFolder = Folder.CreateSubdirectory($"{Method}-{DateTime.Now.Ticks}");
 
         foreach (var (path, hash) in SourcePaths)
-        {
             backups[path] = backupFolder.CreateSubdirectory(hash);
-
-            if (!Contents.ContainsKey(path)) 
-                Contents[path] = new FileTree(backups[path]);
-        }
+        
+        SaveMetadata(sourcePaths);
 
         return (this, backupFolder, backups);
     }
@@ -44,5 +40,9 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
     public void Dispose() => Folder.Delete(true);
 
     public List<DirectoryInfo> GetBackupParts(string name)
-        => Folder.GetDirectories().Select(dir => new DirectoryInfo(Path.Join(dir.FullName, name))).OrderBy(dir => dir.CreationTime).ToList();
+        => Folder
+            .EnumerateDirectories()
+            .Select(dir => new DirectoryInfo(Path.Join(dir.FullName, name)))
+            .OrderBy(dir => dir.CreationTime)
+            .ToList();
 }

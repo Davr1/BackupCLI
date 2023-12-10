@@ -43,6 +43,7 @@ public class FileTree
     public void Add(DirectoryInfo source)
     {
         Sources.Add(source);
+        source.Create();
 
         var sourceDir = FileSystemUtils.NormalizePath(source.FullName, true);
 
