@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-
-namespace BackupCLI.FileSystem;
+﻿namespace BackupCLI.FileSystem;
 
 /// <summary>
 /// Simulated flattened file system tree with references to the actual files from multiple sources.

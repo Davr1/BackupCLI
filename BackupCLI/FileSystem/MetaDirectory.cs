@@ -1,7 +1,8 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using BackupCLI.Helpers;
 
-namespace BackupCLI.Helpers;
+namespace BackupCLI.FileSystem;
 
 public abstract class MetaDirectory<TJson> where TJson : class
 {

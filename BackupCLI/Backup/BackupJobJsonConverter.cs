@@ -76,7 +76,8 @@ public class CronConverter : JsonConverter<CronExpression>
         if (parts.Count == 5) parts.Insert(0, "0");
 
         // day of week and day of month are mutually exclusive
-        if (parts[3] != "?" && parts[5] != "?") parts[5] = "?";
+        if (parts[3].Contains('*') && parts[5] != "?") parts[3] = "?";
+        else if (parts[5].Contains('*') && parts[3] != "?") parts[5] = "?";
 
         return new CronExpression(string.Join(' ', parts));
     }
