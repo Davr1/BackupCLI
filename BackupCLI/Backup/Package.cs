@@ -30,7 +30,7 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
         }
     }
 
-    public (Package package, DirectoryInfo backup, Dictionary<string, DirectoryInfo> targets) CreateBackup()
+    public (Package package, Dictionary<string, DirectoryInfo> targets) CreateBackup()
     {
         var backups = new Dictionary<string, DirectoryInfo>();
 
@@ -45,7 +45,7 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
         
         SaveMetadata(Json);
 
-        return (this, backupFolder, backups);
+        return (this, backups);
     }
 
     public void Dispose() => Folder.Delete(true);

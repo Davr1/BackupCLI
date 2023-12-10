@@ -16,9 +16,8 @@ public class TargetDirectory(DirectoryInfo folder, BackupRetention retention, Ba
     {
         if (json is null) return;
 
-        foreach (var path in json)
-            if (Directory.Exists(Path.Join(Folder.FullName, path)))
-                CreatePackage(path, false);
+        foreach (var path in json.Where(path => Directory.Exists(Path.Join(Folder.FullName, path))))
+            CreatePackage(path, false);
     }
 
     private void CreatePackage(string name, bool update = true)
@@ -38,6 +37,6 @@ public class TargetDirectory(DirectoryInfo folder, BackupRetention retention, Ba
         return Packages.Last!;
     }
 
-    public (Package package, DirectoryInfo backup, Dictionary<string, DirectoryInfo> targets) CreateBackup()
+    public (Package package, Dictionary<string, DirectoryInfo> targets) CreateBackup()
         => GetLatestPackage().CreateBackup();
 }

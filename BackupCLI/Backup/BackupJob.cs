@@ -16,9 +16,11 @@ public class BackupJob
     {
         PrimaryTarget ??= new TargetDirectory(Targets.First(), Retention, Method, Sources.Select(s => s.FullName).ToList());
 
+        Program.Logger.Info($"Performing {Method.ToString().ToLower()} backup: {{ {string.Join(", ", Sources)} }} -> {{ {string.Join(", ", Targets)} }}");
+
         var watch = System.Diagnostics.Stopwatch.StartNew();
 
-        var (package, backup, targets) = PrimaryTarget.CreateBackup();
+        var (package, targets) = PrimaryTarget.CreateBackup();
 
         foreach (var source in Sources)
         {
