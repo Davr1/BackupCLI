@@ -5,7 +5,7 @@
 /// </summary>
 public class FileTree
 {
-    public List<DirectoryInfo> Sources { get; }
+    public List<DirectoryInfo> Sources { get; } = new();
 
     /// <summary>
     /// Relative paths mapped to the index of the source directory they belong to. Directory paths have a trailing backslash.
@@ -35,18 +35,20 @@ public class FileTree
 
     public FileTree(List<DirectoryInfo> sources)
     {
-        Sources = sources;
+        sources.ForEach(Add);
+    }
 
-        if (Sources.Count <= 1) return;
+    public void Add(DirectoryInfo source)
+    {
+        Sources.Add(source);
 
-        foreach (var (dir, index) in Sources.Select((dir, i) => (dir, i)))
-            foreach (var fsInfo in dir.EnumerateFileSystemInfos("*", FileSystemUtils.RecursiveOptions))
-            {
-                string relativePath = fsInfo.FullName.Replace(dir.FullName, "").ToLower();
+        foreach (var fsInfo in source.EnumerateFileSystemInfos("*", FileSystemUtils.RecursiveOptions))
+        {
+            string relativePath = fsInfo.FullName.Replace(source.FullName, "").ToLower();
 
-                if (fsInfo.Attributes.HasFlag(FileAttributes.Directory)) relativePath += "\\";
+            if (fsInfo.Attributes.HasFlag(FileAttributes.Directory)) relativePath += "\\";
 
-                Tree[relativePath] = index;
-            }
+            Tree[relativePath] = Sources.Count - 1;
+        }
     }
 }

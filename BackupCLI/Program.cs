@@ -32,13 +32,6 @@ public class Program
 
         Logger.Info($"Sucsessfully loaded {jobs!.Count} jobs");
 
-        var a = new TargetDirectory(new("C:\\Users\\gpjmp\\Desktop\\test"), new BackupRetention());
-
-        for (int i = 0; i < 50; i++)
-        {
-            a.CreateBackup(i.ToString());
-        }
-
-        //jobs.ForEach(job => job.PerformBackup());
+        jobs.ForEach(job => job.PerformBackup());
     }
 }

@@ -1,9 +1,14 @@
-﻿namespace BackupCLI.FileSystem;
+﻿using System.Security.Cryptography;
+using System.Security.Policy;
+using System.Text;
+
+namespace BackupCLI.FileSystem;
 
 public static class FileSystemUtils
 {
     public static readonly EnumerationOptions TopLevelOptions = new() { IgnoreInaccessible = true, MatchCasing = MatchCasing.CaseInsensitive };
     public static readonly EnumerationOptions RecursiveOptions = new() { IgnoreInaccessible = true, MatchCasing = MatchCasing.CaseInsensitive, RecurseSubdirectories = true };
+    private static readonly MD5 Hasher = MD5.Create();
 
     /// <summary>
     /// Checks whether two directories are direct ancestors of each other.
@@ -81,4 +86,7 @@ public static class FileSystemUtils
     /// <returns></returns>
     public static string GetRelativePath(DirectoryInfo dir, FileSystemInfo path)
         => Path.GetRelativePath(dir.FullName, path.FullName);
+
+    public static string GetHashedPath(string path, bool isDir)
+        => Convert.ToHexString(Hasher.ComputeHash(Encoding.ASCII.GetBytes(NormalizePath(path.ToLower(), isDir))));
 }

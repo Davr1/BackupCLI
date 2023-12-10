@@ -1,62 +1,51 @@
 ﻿using BackupCLI.Collections;
-using BackupCLI.FileSystem;
 
 namespace BackupCLI.Backup;
 
 public class TargetDirectory
 {
     private const string MetaFileName = "backup.txt";
-    private DirectoryInfo Folder { get; }
+    public FileInfo MetaFile { get; }
+    public DirectoryInfo Folder { get; }
     public FixedQueue<Package> Packages { get; }
-    public Package LatestPackage
-    {
-        get
-        {
-            if (Packages.Last is null || Packages.Last.IsFull())
-                CreatePackage(DateTime.Now.Ticks.ToString());
+    public BackupRetention Retention { get; }
+    public BackupMethod Method { get; }
 
-            return Packages.Last!;
-        }
-    }
-
-    private BackupRetention Retention { get; }
-
-    public TargetDirectory(DirectoryInfo folder, BackupRetention retention)
+    public TargetDirectory(DirectoryInfo folder, BackupRetention retention, BackupMethod method)
     {
         Folder = folder;
         Packages = new(retention.Count);
         Retention = retention;
+        Method = method;
 
-        var metaFilePath = Path.Join(Folder.FullName, MetaFileName);
+        MetaFile = new FileInfo(Path.Join(Folder.FullName, MetaFileName));
+        if (!MetaFile.Exists) File.WriteAllText(MetaFile.FullName, "");
 
-        if (File.Exists(metaFilePath))
-        {
-            foreach (var pkg in File.ReadAllLines(metaFilePath))
-            {
-                if (new DirectoryInfo(Path.Join(Folder.FullName, pkg)) is { Exists: true } dir)
-                {
-                    Packages.Enqueue(new(dir, Retention));
-                }
-            }
-        }
-        else
-        {
-            File.WriteAllLines(metaFilePath, Directory.EnumerateDirectories(folder.FullName, "#*", FileSystemUtils.TopLevelOptions));
-        }
-    }
+        foreach(var pkg in File.ReadAllLines(MetaFile.FullName))
+            if (Directory.Exists(Path.Join(Folder.FullName, pkg)))
+                CreatePackage(pkg, false);
 
-    private void SaveMeta()
-    {
-        var metaFilePath = Path.Join(Folder.FullName, MetaFileName);
-        File.WriteAllLines(metaFilePath, Packages.Select(dir => dir.Folder.Name));
-    }
-
-    public void CreatePackage(string name)
-    {
-        var packageDir = Directory.CreateDirectory(Path.Join(Folder.FullName, name));
-        Packages.Enqueue(new(packageDir, Retention));
         SaveMeta();
     }
 
-    public void CreateBackup(string name) => LatestPackage.CreateBackup(name);
+    private void SaveMeta()
+        => File.WriteAllLines(MetaFile.FullName, Packages.Select(dir => dir.Folder.Name));
+
+    private void CreatePackage(string name, bool update = true)
+    {
+        var packageDir = new DirectoryInfo(Path.Join(Folder.FullName, name));
+        Packages.Enqueue(new Package(packageDir, Retention, Method));
+        
+        if (update) SaveMeta();
+    }
+
+    public Package GetLatestPackage()
+    {
+        if (Packages.Last is null || Packages.Last.IsFull()) CreatePackage(DateTime.Now.Ticks.ToString());
+
+        return Packages.Last!;
+    }
+
+    public (Package package, DirectoryInfo backup, Dictionary<string, DirectoryInfo> targets) CreateBackup(params string[] paths)
+        => GetLatestPackage().CreateBackup(paths);
 }

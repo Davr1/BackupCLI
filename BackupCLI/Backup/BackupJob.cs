@@ -1,4 +1,5 @@
-﻿using BackupCLI.FileSystem;
+﻿using System.Threading.Channels;
+using BackupCLI.FileSystem;
 using Quartz;
 
 namespace BackupCLI.Backup;
@@ -17,67 +18,24 @@ public class BackupJob
 
         var watch = System.Diagnostics.Stopwatch.StartNew();
 
-        var primaryTarget = Targets.First();
+        var primaryTarget = new TargetDirectory(Targets.First(), Retention, Method);
+
+        var sources = Sources.Select(source => source.FullName).ToArray();
+        var (package, backup, targets) = primaryTarget.CreateBackup(sources);
 
         foreach (var source in Sources)
         {
-            FileTree packageParts;
-
-            switch (Method)
-            {
-                case BackupMethod.Incremental when GetBackups(primaryTarget, source.Name) is { Count: > 0 } backups:
-                    dirName = $"#INCR_{dirName}";
-                    packageParts = new FileTree(backups);
-                    break;
-
-                case BackupMethod.Differential when GetFullBackup(primaryTarget, source.Name) is { } fullBackup:
-                    dirName = $"#DIFF_{dirName}";
-                    packageParts = new FileTree(fullBackup);
-                    break;
-
-                case BackupMethod.Full:
-                default:
-                    dirName = $"#FULL_{dirName}";
-                    packageParts = new FileTree();
-                    break;
-            }
-
-            string target = Path.Join(primaryTarget.FullName, dirName, source.Name);
-
-            try
-            {
-                BackupDirectory(source, target, packageParts);
-            }
-            catch (Exception e)
-            {
-                Program.Logger.Info("Backup failed");
-                Program.Logger.Error(e);
-            }
+            var target = targets[source.FullName];
+            BackupDirectory(source, target.FullName, package.Tree);
         }
+        
+        package.UpdateIndex(backup);
 
-        // this speeds up the process by using the simplest algorithm to mirror the primary target
-        foreach (var target in Targets.Skip(1))
-            foreach (var sub in primaryTarget.GetDirectories("#*"))
-            {
-                var dest = Path.Join(target.FullName, sub.Name);
-                if (!Directory.Exists(dest)) sub.TryCopyTo(dest, true);
-            }
+        Console.WriteLine(targets.Count);
 
         watch.Stop();
         Program.Logger.Info($"Took {watch.ElapsedMilliseconds} ms");
     }
-
-    //todo: move to separate class
-    private static List<DirectoryInfo> GetPackageContents(DirectoryInfo dir, string searchPattern = "*") =>
-        dir.GetDirectories(searchPattern, FileSystemUtils.TopLevelOptions).OrderBy(d => d.CreationTime).ToList();
-
-    //todo: move to separate class
-    private static List<DirectoryInfo> GetBackups(DirectoryInfo dir, string sourceName, string searchPattern = "#*") =>
-        GetPackageContents(dir, searchPattern).Select(dir => dir.GetDirectories(sourceName).First()).ToList();
-
-    //todo: move to separate class
-    private static DirectoryInfo? GetFullBackup(DirectoryInfo dir, string sourceName) =>
-        GetBackups(dir, sourceName, "#FULL*").LastOrDefault();
 
     private static void BackupDirectory(DirectoryInfo source, string target, FileTree packageParts)
     {
