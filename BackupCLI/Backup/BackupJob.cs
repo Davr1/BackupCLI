@@ -18,18 +18,20 @@ public class BackupJob
 
         var watch = System.Diagnostics.Stopwatch.StartNew();
 
-        var primaryTarget = new TargetDirectory(Targets.First(), Retention, Method);
+        var primaryTarget = new TargetDirectory(Targets.First(), Retention, Method, Sources.Select(s => s.FullName).ToList());
 
         var sources = Sources.Select(source => source.FullName).ToArray();
-        var (package, backup, targets) = primaryTarget.CreateBackup(sources);
+        var (package, backup, targets) = primaryTarget.CreateBackup();
 
         foreach (var source in Sources)
         {
             var target = targets[source.FullName];
-            BackupDirectory(source, target.FullName, package.Tree);
+            BackupDirectory(source, target.FullName, package.Contents[source.FullName]);
+            package.Contents[source.FullName].Add(target);
+            package.SaveMeta();
         }
         
-        package.UpdateIndex(backup);
+        //package.UpdateIndex(backup);
 
         Console.WriteLine(targets.Count);
 
@@ -39,6 +41,7 @@ public class BackupJob
 
     private static void BackupDirectory(DirectoryInfo source, string target, FileTree packageParts)
     {
+        Console.WriteLine($"Copying {source.FullName} to {target}");
         Directory.CreateDirectory(target);
 
         // there is nothing to compare, copy the folder right away

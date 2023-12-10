@@ -10,20 +10,22 @@ public class TargetDirectory
     public FixedQueue<Package> Packages { get; }
     public BackupRetention Retention { get; }
     public BackupMethod Method { get; }
+    public List<string> Paths { get; }
 
-    public TargetDirectory(DirectoryInfo folder, BackupRetention retention, BackupMethod method)
+    public TargetDirectory(DirectoryInfo folder, BackupRetention retention, BackupMethod method, List<string> paths)
     {
         Folder = folder;
         Packages = new(retention.Count);
         Retention = retention;
         Method = method;
+        Paths = paths;
 
         MetaFile = new FileInfo(Path.Join(Folder.FullName, MetaFileName));
-        if (!MetaFile.Exists) File.WriteAllText(MetaFile.FullName, "");
 
-        foreach(var pkg in File.ReadAllLines(MetaFile.FullName))
-            if (Directory.Exists(Path.Join(Folder.FullName, pkg)))
-                CreatePackage(pkg, false);
+        if (MetaFile.Exists)
+            foreach(var pkg in File.ReadAllLines(MetaFile.FullName))
+                if (Directory.Exists(Path.Join(Folder.FullName, pkg)))
+                    CreatePackage(pkg, false);
 
         SaveMeta();
     }
@@ -34,7 +36,7 @@ public class TargetDirectory
     private void CreatePackage(string name, bool update = true)
     {
         var packageDir = new DirectoryInfo(Path.Join(Folder.FullName, name));
-        Packages.Enqueue(new Package(packageDir, Retention, Method));
+        Packages.Enqueue(new Package(packageDir, Retention, Method, Paths));
         
         if (update) SaveMeta();
     }
@@ -46,6 +48,6 @@ public class TargetDirectory
         return Packages.Last!;
     }
 
-    public (Package package, DirectoryInfo backup, Dictionary<string, DirectoryInfo> targets) CreateBackup(params string[] paths)
-        => GetLatestPackage().CreateBackup(paths);
+    public (Package package, DirectoryInfo backup, Dictionary<string, DirectoryInfo> targets) CreateBackup()
+        => GetLatestPackage().CreateBackup();
 }

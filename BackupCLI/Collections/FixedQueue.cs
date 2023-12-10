@@ -1,8 +1,8 @@
 ﻿namespace BackupCLI.Collections;
 
-public class FixedQueue<T>(int size) : Queue<T>
+public class FixedQueue<T>(int capacity) : Queue<T>
 {
-    public int Size { get; } = size;
+    public int Capacity { get; } = capacity;
     public T? Last { get; private set; }
 
     public new void Enqueue(T item)
@@ -10,7 +10,7 @@ public class FixedQueue<T>(int size) : Queue<T>
         base.Enqueue(item);
         Last = item;
 
-        while (Count > Size)
+        while (Count > Capacity)
         {
             T removed = Dequeue();
             if (removed is IDisposable disposable) disposable.Dispose();

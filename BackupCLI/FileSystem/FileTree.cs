@@ -1,4 +1,6 @@
-﻿namespace BackupCLI.FileSystem;
+﻿using Microsoft.Extensions.Logging;
+
+namespace BackupCLI.FileSystem;
 
 /// <summary>
 /// Simulated flattened file system tree with references to the actual files from multiple sources.
@@ -41,14 +43,24 @@ public class FileTree
     public void Add(DirectoryInfo source)
     {
         Sources.Add(source);
+        Program.Logger.LogWarning(source.FullName);
+        Program.Logger.LogWarning(source.EnumerateFileSystemInfos("*", FileSystemUtils.RecursiveOptions).Count().ToString());
+        if (source.EnumerateFileSystemInfos("*", FileSystemUtils.RecursiveOptions).Count() > 10)
+        {
+            Console.WriteLine("test");
+        }
+
+        var sourceDir = FileSystemUtils.NormalizePath(source.FullName, true);
 
         foreach (var fsInfo in source.EnumerateFileSystemInfos("*", FileSystemUtils.RecursiveOptions))
         {
-            string relativePath = fsInfo.FullName.Replace(source.FullName, "").ToLower();
+            string relativePath = fsInfo.FullName.Replace(sourceDir, "").ToLower();
 
             if (fsInfo.Attributes.HasFlag(FileAttributes.Directory)) relativePath += "\\";
 
             Tree[relativePath] = Sources.Count - 1;
+            Program.Logger.Info($"Added {relativePath} from {sourceDir} [{Sources.Count-1}]");
+            Console.WriteLine(GetFullPath(Sources.Count-1, relativePath));
         }
     }
 }
