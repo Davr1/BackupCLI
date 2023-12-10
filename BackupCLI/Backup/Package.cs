@@ -65,8 +65,9 @@ public class Package : IDisposable
     public void SaveMeta()
         => File.WriteAllLines(MetaFile.FullName, Paths.Select(path => $"{path}|{GetHashedPath(path, true)}"));
 
-    public List<DirectoryInfo> GetBackupParts(string hash)
-        => Folder.GetDirectories().Select(dir => new DirectoryInfo(Path.Join(dir.FullName, hash))).OrderBy(dir => dir.CreationTime).ToList();
+    public List<DirectoryInfo> GetBackupParts(string name)
+        => Folder.GetDirectories().Select(dir => new DirectoryInfo(Path.Join(dir.FullName, name))).OrderBy(dir => dir.CreationTime).ToList();
 
-    public string GetHashedPath(string path, bool isDir) => path.Replace(Path.DirectorySeparatorChar, '-')[3..] + "" + FileSystemUtils.GetHashedPath(path, isDir);
+    public string GetHashedPath(string path, bool isDir)
+        => $"{new DirectoryInfo(path).Name} {FileSystemUtils.GetHashedPath(path, isDir)}";
 }

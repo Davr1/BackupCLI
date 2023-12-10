@@ -4,7 +4,7 @@ namespace BackupCLI.Helpers;
 
 public static class JsonUtils
 {
-    public static T LoadFile<T>(string path, JsonSerializerOptions options)
+    public static T LoadFile<T>(string path, JsonSerializerOptions? options = null)
     {
         if (JsonSerializer.Deserialize<T>(File.ReadAllText(path), options) is not { } json)
             throw new JsonException("Input file is not a valid JSON file.");
@@ -12,7 +12,7 @@ public static class JsonUtils
         return json;
     }
 
-    public static bool TryLoadFile<T>(string path, JsonSerializerOptions options, out T? output)
+    public static bool TryLoadFile<T>(string path, out T? output, JsonSerializerOptions? options = null)
     {
         try
         {
@@ -22,6 +22,20 @@ public static class JsonUtils
         catch (Exception e)
         {
             output = default;
+            Program.Logger.Error(e);
+            return false;
+        }
+    }
+
+    public static bool TryWriteFile<T>(string path, T? input, JsonSerializerOptions? options = null)
+    {
+        try
+        {
+            File.WriteAllText(path, JsonSerializer.Serialize(input, options));
+            return true;
+        }
+        catch (Exception e)
+        {
             Program.Logger.Error(e);
             return false;
         }

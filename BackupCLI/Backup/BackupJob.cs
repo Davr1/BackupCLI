@@ -1,5 +1,4 @@
-﻿using System.Threading.Channels;
-using BackupCLI.FileSystem;
+﻿using BackupCLI.FileSystem;
 using Quartz;
 
 namespace BackupCLI.Backup;
@@ -11,17 +10,15 @@ public class BackupJob
     public CronExpression Timing { get; set; } = null!;
     public BackupRetention Retention { get; set; } = null!;
     public BackupMethod Method { get; set; } = default;
+    public TargetDirectory? PrimaryTarget { get; set; }
 
     public void PerformBackup()
     {
-        string dirName = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
+        PrimaryTarget ??= new TargetDirectory(Targets.First(), Retention, Method, Sources.Select(s => s.FullName).ToList());
 
         var watch = System.Diagnostics.Stopwatch.StartNew();
 
-        var primaryTarget = new TargetDirectory(Targets.First(), Retention, Method, Sources.Select(s => s.FullName).ToList());
-
-        var sources = Sources.Select(source => source.FullName).ToArray();
-        var (package, backup, targets) = primaryTarget.CreateBackup();
+        var (package, backup, targets) = PrimaryTarget.CreateBackup();
 
         foreach (var source in Sources)
         {
