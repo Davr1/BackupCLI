@@ -1,11 +1,13 @@
-﻿namespace BackupCLI.FileSystem;
+﻿using Microsoft.Extensions.Logging;
+
+namespace BackupCLI.FileSystem;
 
 /// <summary>
 /// Simulated flattened file system tree with references to the actual files from multiple sources.
 /// </summary>
 public class FileTree
 {
-    public List<DirectoryInfo> Sources { get; }
+    public List<DirectoryInfo> Sources { get; } = new();
 
     /// <summary>
     /// Relative paths mapped to the index of the source directory they belong to. Directory paths have a trailing backslash.
@@ -31,22 +33,27 @@ public class FileTree
     public DirectoryInfo? GetDirectory(string relativePath)
         => GetFullPath(relativePath + "\\") is string path ? new(path) : null;
 
-    public FileTree(params DirectoryInfo[] sources) : this(sources.ToList()) { }
+    public FileTree(params DirectoryInfo[] sources) : this(sources.AsEnumerable()) { }
 
-    public FileTree(List<DirectoryInfo> sources)
+    public FileTree(IEnumerable<DirectoryInfo> sources)
     {
-        Sources = sources;
+        foreach (var source in sources) Add(source);
+    }
 
-        if (Sources.Count <= 1) return;
+    public void Add(DirectoryInfo source)
+    {
+        Sources.Add(source);
+        source.Create();
 
-        foreach (var (dir, index) in Sources.Select((dir, i) => (dir, i)))
-            foreach (var fsInfo in dir.EnumerateFileSystemInfos("*", FileSystemUtils.RecursiveOptions))
-            {
-                string relativePath = fsInfo.FullName.Replace(dir.FullName, "").ToLower();
+        var sourceDir = FileSystemUtils.NormalizePath(source.FullName, true);
 
-                if (fsInfo.Attributes.HasFlag(FileAttributes.Directory)) relativePath += "\\";
+        foreach (var fsInfo in source.EnumerateFileSystemInfos("*", FileSystemUtils.RecursiveOptions))
+        {
+            string relativePath = fsInfo.FullName.Replace(sourceDir, "").ToLower();
 
-                Tree[relativePath] = index;
-            }
+            if (fsInfo.Attributes.HasFlag(FileAttributes.Directory)) relativePath += "\\";
+
+            Tree[relativePath] = Sources.Count - 1;
+        }
     }
 }

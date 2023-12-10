@@ -10,71 +10,45 @@ public class BackupJob
     public CronExpression Timing { get; set; } = null!;
     public BackupRetention Retention { get; set; } = null!;
     public BackupMethod Method { get; set; } = default;
+    public TargetDirectory? PrimaryTarget { get; set; }
 
     public void PerformBackup()
     {
-        string dirName = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
+        PrimaryTarget ??= new TargetDirectory(Targets.First(), Retention, Method, Sources.Select(s => s.FullName).ToList());
 
         var watch = System.Diagnostics.Stopwatch.StartNew();
 
-        var primaryTarget = Targets.First();
+        var (package, backup, targets) = PrimaryTarget.CreateBackup();
 
         foreach (var source in Sources)
         {
-            FileTree packageParts;
+            // only folders inside the current package.json will be copied
+            // if the configuration changes, the folder will be copied in the next package
+            if (!targets.TryGetValue(source.FullName, out var target)) continue;
 
-            switch (Method)
-            {
-                case BackupMethod.Incremental when GetBackups(primaryTarget, source.Name) is { Count: > 0 } backups:
-                    dirName = $"#INCR_{dirName}";
-                    packageParts = new FileTree(backups);
-                    break;
-
-                case BackupMethod.Differential when GetFullBackup(primaryTarget, source.Name) is { } fullBackup:
-                    dirName = $"#DIFF_{dirName}";
-                    packageParts = new FileTree(fullBackup);
-                    break;
-
-                case BackupMethod.Full:
-                default:
-                    dirName = $"#FULL_{dirName}";
-                    packageParts = new FileTree();
-                    break;
-            }
-
-            string target = Path.Join(primaryTarget.FullName, dirName, source.Name);
-
-            try
-            {
-                BackupDirectory(source, target, packageParts);
-            }
-            catch (Exception e)
-            {
-                Program.Logger.Info("Backup failed");
-                Program.Logger.Error(e);
-            }
+            BackupDirectory(source, target.FullName, package.Contents[source.FullName]);
+            package.Contents[source.FullName].Add(target);
         }
 
-        // this speeds up the process by using the simplest algorithm to mirror the primary target
+        // mirrors the primary target to other targets
         foreach (var target in Targets.Skip(1))
-            foreach (var sub in primaryTarget.GetDirectories("#*"))
+        {
+            PrimaryTarget.MetadataFile.TryCopyTo(Path.Join(target.FullName, PrimaryTarget.MetadataFileName), true);
+
+            foreach (var pkg in PrimaryTarget.Packages)
             {
-                var dest = Path.Join(target.FullName, sub.Name);
-                if (!Directory.Exists(dest)) sub.TryCopyTo(dest, true);
+                var mirrorPkg = Directory.CreateDirectory(Path.Join(target.FullName, pkg.Folder.Name));
+
+                pkg.MetadataFile.TryCopyTo(Path.Join(mirrorPkg.FullName, pkg.MetadataFileName), true);
+
+                foreach (var path in pkg.Json.Parts.Select(part => Path.Join(pkg.Folder.Name, part)))
+                    new DirectoryInfo(Path.Join(PrimaryTarget.Folder.FullName, path)).CopyTo(Path.Join(target.FullName, path));
             }
+        }
 
         watch.Stop();
         Program.Logger.Info($"Took {watch.ElapsedMilliseconds} ms");
     }
-
-    private static List<DirectoryInfo> GetPackageContents(DirectoryInfo dir, string searchPattern = "*") =>
-        dir.GetDirectories(searchPattern, FileSystemUtils.TopLevelOptions).OrderBy(d => d.CreationTime).ToList();
-
-    private static List<DirectoryInfo> GetBackups(DirectoryInfo dir, string sourceName, string searchPattern = "#*") =>
-        GetPackageContents(dir, searchPattern).Select(dir => dir.GetDirectories(sourceName).First()).ToList();
-
-    private static DirectoryInfo? GetFullBackup(DirectoryInfo dir, string sourceName) =>
-        GetBackups(dir, sourceName, "#FULL*").LastOrDefault();
 
     private static void BackupDirectory(DirectoryInfo source, string target, FileTree packageParts)
     {
