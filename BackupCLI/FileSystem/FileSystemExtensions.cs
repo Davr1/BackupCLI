@@ -29,10 +29,16 @@ public static class FileSystemExtensions
 
     public static DirectoryInfo CopyTo(this DirectoryInfo source, string destDirName, bool overwrite = false)
     {
-        var dir = Directory.CreateDirectory(destDirName);
+        var dir = new DirectoryInfo(destDirName);
 
-        foreach (var entry in source.EnumerateFileSystemInfos("*", FileSystemUtils.TopLevelOptions))
-            entry.TryCopyTo(Path.Join(destDirName, entry.Name), overwrite);
+        if (!dir.Exists || overwrite)
+        {
+            dir.Create();
+            dir.Attributes = source.Attributes;
+
+            foreach (var entry in source.EnumerateFileSystemInfos("*", FileSystemUtils.TopLevelOptions))
+                entry.TryCopyTo(Path.Join(destDirName, entry.Name), overwrite);
+        }
 
         return dir;
     }

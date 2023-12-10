@@ -30,6 +30,22 @@ public class BackupJob
             package.Contents[source.FullName].Add(target);
         }
 
+        // mirrors the primary target to other targets
+        foreach (var target in Targets.Skip(1))
+        {
+            PrimaryTarget.MetadataFile.TryCopyTo(Path.Join(target.FullName, PrimaryTarget.MetadataFileName), true);
+
+            foreach (var pkg in PrimaryTarget.Packages)
+            {
+                var mirrorPkg = Directory.CreateDirectory(Path.Join(target.FullName, pkg.Folder.Name));
+
+                pkg.MetadataFile.TryCopyTo(Path.Join(mirrorPkg.FullName, pkg.MetadataFileName), true);
+
+                foreach (var path in pkg.Json.Parts.Select(part => Path.Join(pkg.Folder.Name, part)))
+                    new DirectoryInfo(Path.Join(PrimaryTarget.Folder.FullName, path)).CopyTo(Path.Join(target.FullName, path));
+            }
+        }
+
         watch.Stop();
         Program.Logger.Info($"Took {watch.ElapsedMilliseconds} ms");
     }

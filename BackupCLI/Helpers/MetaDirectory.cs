@@ -6,8 +6,8 @@ namespace BackupCLI.Helpers;
 public abstract class MetaDirectory<TJson> where TJson : class
 {
     public DirectoryInfo Folder { get; }
-    protected string MetadataFileName;
-    protected string MetadataFilePath => Path.Join(Folder.FullName, MetadataFileName);
+    public string MetadataFileName;
+    public FileInfo MetadataFile => new(Path.Join(Folder.FullName, MetadataFileName));
     protected List<DirectoryInfo> Subdirectories => Folder.GetDirectories().ToList();
     protected virtual JsonSerializerOptions Options { get; set; } = new()
     {
@@ -31,20 +31,20 @@ public abstract class MetaDirectory<TJson> where TJson : class
 
     public void LoadMetadata(TJson? @default = default)
     {
-        if (!File.Exists(MetadataFilePath))
+        if (!MetadataFile.Exists)
         {
             SetProperties(@default);
             SaveMetadata(@default);
         }
         else
         {
-            JsonUtils.TryLoadFile(MetadataFilePath, out TJson? output, Options);
+            JsonUtils.TryLoadFile(MetadataFile.FullName, out TJson? output, Options);
             SetProperties(output);
         }
     }
 
     public void SaveMetadata(TJson obj)
     {
-        JsonUtils.TryWriteFile(MetadataFilePath, obj, Options);
+        JsonUtils.TryWriteFile(MetadataFile.FullName, obj, Options);
     }
 }
