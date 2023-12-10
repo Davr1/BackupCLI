@@ -1,44 +1,27 @@
 ﻿using BackupCLI.FileSystem;
+using BackupCLI.Helpers;
 
 namespace BackupCLI.Backup;
 
-public class Package : IDisposable
+public class Package(DirectoryInfo folder, BackupRetention retention, BackupMethod method, Dictionary<string, string> sourcePaths)
+    : MetaDirectory<Dictionary<string, string>>(folder, "package.json", sourcePaths), IDisposable
 {
-    private const string MetaFileName = "package.txt";
-    public FileInfo MetaFile { get; }
-    public DirectoryInfo Folder { get; }
-    public BackupRetention Retention { get; }
-    public BackupMethod Method { get; }
-    public int Size => Folder.GetDirectories().Length;
+    public BackupRetention Retention { get; } = retention;
+    public BackupMethod Method { get; } = method;
+    public int Size => Subdirectories.Count;
     public Dictionary<string, FileTree> Contents { get; } = new();
-    public List<string> Paths { get; }
+    public Dictionary<string, string> SourcePaths { get; } = sourcePaths;
 
     public bool IsFull()
         => Size >= (Method == BackupMethod.Full ? 1 : Retention.Size);
 
-    public Package(DirectoryInfo folder, BackupRetention retention, BackupMethod method, List<string> paths)
+    protected override void SetProperties(Dictionary<string, string>? json)
     {
-        folder.Create();
+        if (json is null) return;
 
-        Folder = folder;
-        Retention = retention;
-        Method = method;
-        Paths = paths;
-
-        MetaFile = new FileInfo(Path.Join(Folder.FullName, MetaFileName));
-
-        if (MetaFile.Exists) 
-            foreach (var pkg in File.ReadAllLines(MetaFile.FullName))
-            {
-                var parts = pkg.Split('|');
-                if (parts.Length != 2) continue;
-                var name = parts[0];
-                var hash = parts[1];
-
-                Contents[name] = new FileTree(GetBackupParts(hash));
-            }
-
-        SaveMeta();
+        foreach (var (path, hash) in json)
+            if (Directory.Exists(Path.Join(Folder.FullName, hash)))
+                Contents[path] = new FileTree(GetBackupParts(hash));
     }
 
     public (Package package, DirectoryInfo backup, Dictionary<string, DirectoryInfo> targets) CreateBackup()
@@ -47,11 +30,9 @@ public class Package : IDisposable
 
         var backupFolder = Folder.CreateSubdirectory($"{Method}-{DateTime.Now.Ticks}");
 
-        foreach (var path in Paths)
+        foreach (var (path, hash) in SourcePaths)
         {
-            string name = GetHashedPath(path, true);
-            
-            backups[path] = backupFolder.CreateSubdirectory(name);
+            backups[path] = backupFolder.CreateSubdirectory(hash);
 
             if (!Contents.ContainsKey(path)) 
                 Contents[path] = new FileTree(backups[path]);
@@ -62,12 +43,6 @@ public class Package : IDisposable
 
     public void Dispose() => Folder.Delete(true);
 
-    public void SaveMeta()
-        => File.WriteAllLines(MetaFile.FullName, Paths.Select(path => $"{path}|{GetHashedPath(path, true)}"));
-
     public List<DirectoryInfo> GetBackupParts(string name)
         => Folder.GetDirectories().Select(dir => new DirectoryInfo(Path.Join(dir.FullName, name))).OrderBy(dir => dir.CreationTime).ToList();
-
-    public string GetHashedPath(string path, bool isDir)
-        => $"{new DirectoryInfo(path).Name} {FileSystemUtils.GetHashedPath(path, isDir)}";
 }

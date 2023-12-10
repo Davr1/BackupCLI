@@ -1,44 +1,34 @@
 ﻿using BackupCLI.Collections;
+using BackupCLI.FileSystem;
+using BackupCLI.Helpers;
 
 namespace BackupCLI.Backup;
 
-public class TargetDirectory
+public class TargetDirectory(DirectoryInfo folder, BackupRetention retention, BackupMethod method, List<string> paths)
+    : MetaDirectory<List<string>>(folder, "metadata.json", folder.GetDirectories().Select(dir => dir.Name).ToList())
 {
-    private const string MetaFileName = "backup.txt";
-    public FileInfo MetaFile { get; }
-    public DirectoryInfo Folder { get; }
-    public FixedQueue<Package> Packages { get; }
-    public BackupRetention Retention { get; }
-    public BackupMethod Method { get; }
-    public List<string> Paths { get; }
+    public FixedQueue<Package> Packages { get; } = new(retention.Count);
+    public BackupRetention Retention { get; } = retention;
+    public BackupMethod Method { get; } = method;
+    public List<string> SourcePaths { get; } = paths;
 
-    public TargetDirectory(DirectoryInfo folder, BackupRetention retention, BackupMethod method, List<string> paths)
+    protected override void SetProperties(List<string>? json)
     {
-        Folder = folder;
-        Packages = new(retention.Count);
-        Retention = retention;
-        Method = method;
-        Paths = paths;
+        if (json is null) return;
 
-        MetaFile = new FileInfo(Path.Join(Folder.FullName, MetaFileName));
-
-        if (MetaFile.Exists)
-            foreach(var pkg in File.ReadAllLines(MetaFile.FullName))
-                if (Directory.Exists(Path.Join(Folder.FullName, pkg)))
-                    CreatePackage(pkg, false);
-
-        SaveMeta();
+        foreach (var path in json)
+            if (Directory.Exists(Path.Join(Folder.FullName, path)))
+                CreatePackage(path, false);
     }
-
-    private void SaveMeta()
-        => File.WriteAllLines(MetaFile.FullName, Packages.Select(dir => dir.Folder.Name));
 
     private void CreatePackage(string name, bool update = true)
     {
         var packageDir = new DirectoryInfo(Path.Join(Folder.FullName, name));
-        Packages.Enqueue(new Package(packageDir, Retention, Method, Paths));
+        var paths = SourcePaths.Select(s => (s, FileSystemUtils.GetHashedPath(s.ToLower(), true))).ToDictionary();
+
+        Packages.Enqueue(new Package(packageDir, Retention, Method, paths));
         
-        if (update) SaveMeta();
+        if (update) SaveMetadata(Packages.Select(p => p.Folder.Name).ToList());
     }
 
     public Package GetLatestPackage()

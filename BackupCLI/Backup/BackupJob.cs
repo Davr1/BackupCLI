@@ -25,7 +25,6 @@ public class BackupJob
             var target = targets[source.FullName];
             BackupDirectory(source, target.FullName, package.Contents[source.FullName]);
             package.Contents[source.FullName].Add(target);
-            package.SaveMeta();
         }
 
         watch.Stop();
