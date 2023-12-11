@@ -29,7 +29,7 @@ public class FileTree
         => GetFullPath(relativePath) is string path ? new(path) : null;
 
     public DirectoryInfo? GetDirectory(string relativePath)
-        => GetFullPath(relativePath + "\\") is string path ? new(path) : null;
+        => GetFullPath(relativePath + Path.DirectorySeparatorChar) is string path ? new(path) : null;
 
     public FileTree(params DirectoryInfo[] sources) : this(sources.AsEnumerable()) { }
 
@@ -49,7 +49,7 @@ public class FileTree
         {
             string relativePath = fsInfo.FullName.Replace(sourceDir, "").ToLower();
 
-            if (fsInfo.Attributes.HasFlag(FileAttributes.Directory)) relativePath += "\\";
+            if (fsInfo.Attributes.HasFlag(FileAttributes.Directory)) relativePath += Path.DirectorySeparatorChar;
 
             Tree[relativePath] = Sources.Count - 1;
         }

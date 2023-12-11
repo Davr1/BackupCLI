@@ -72,6 +72,9 @@ public class CronConverter : JsonConverter<CronExpression>
 
         List<string> parts = reader.GetString()!.Split(' ').ToList();
 
+        if (parts.Count is < 5 or > 7)
+            throw new JsonException("Invalid cron expression");
+
         // standard cron expression are incompatible with the quartz format, so we need to convert them
         if (parts.Count == 5) parts.Insert(0, "0");
 

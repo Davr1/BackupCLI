@@ -4,11 +4,7 @@ using BackupCLI.FileSystem;
 namespace BackupCLI.Backup;
 
 public class TargetDirectory(DirectoryInfo folder, BackupRetention retention, BackupMethod method, List<string> paths)
-    : MetaDirectory<TargetDirectoryJson>(
-        folder,
-        "metadata.json",
-        new TargetDirectoryJson { Packages = folder.GetDirectories().Select(dir => dir.Name).ToList() }
-    )
+    : MetaDirectory<TargetDirectoryJson>(folder, "metadata.json", new(FileSystemUtils.GetOrdereredSubdirectories(folder)))
 {
     public FixedQueue<Package> Packages { get; } = new(retention.Count);
     public BackupRetention Retention { get; } = retention;
@@ -23,17 +19,21 @@ public class TargetDirectory(DirectoryInfo folder, BackupRetention retention, Ba
 
     private void CreatePackage(string name)
     {
-        var packageDir = new DirectoryInfo(Path.Join(Folder.FullName, name));
-        var paths = SourcePaths.Select(s => (s, FileSystemUtils.GetHashedPath(s.ToLower(), true))).ToDictionary();
+        var packageDir = Directory.CreateDirectory(Path.Join(Folder.FullName, name));
 
-        Packages.Enqueue(new Package(packageDir, Retention, Method, new() { Paths = paths }));
+        var paths = FileSystemUtils.GetHashedPaths(SourcePaths);
+        var defaultJson = new PackageJson(paths, FileSystemUtils.GetOrdereredSubdirectories(packageDir));
+
+        var pkg = new Package(packageDir, Retention, Method, defaultJson);
+
+        Packages.Enqueue(pkg);
         
-        SaveMetadata(new TargetDirectoryJson { Packages = Packages.Select(p => p.Folder.Name).ToList() });
+        SaveMetadata(new(Packages.Select(p => p.Folder.Name).ToList()));
     }
 
     public Package GetLatestPackage()
     {
-        if (Packages.Last is null || Packages.Last.IsFull()) CreatePackage(DateTime.Now.Ticks.ToString());
+        if (Packages.Last is null || Packages.Last.IsFull()) CreatePackage($"{DateTime.Now.Ticks:X}");
 
         return Packages.Last!;
     }
@@ -42,8 +42,8 @@ public class TargetDirectory(DirectoryInfo folder, BackupRetention retention, Ba
         => (GetLatestPackage(), GetLatestPackage().CreateBackup());
 }
 
-public class TargetDirectoryJson
+public class TargetDirectoryJson(List<string>? packages = null)
 {
-    public List<string> Packages { get; set; } = new();
+    public List<string> Packages { get; set; } = packages ?? new();
     public string? CurrentPackage => Packages.LastOrDefault();
 }

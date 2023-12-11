@@ -10,8 +10,7 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
     public Dictionary<string, FileTree> Contents { get; } = new();
     public int Size => Json.Parts.Count;
 
-    public bool IsFull()
-        => Size >= (Method == BackupMethod.Full ? 1 : Retention.Size);
+    public bool IsFull() => Size >= (Method == BackupMethod.Full ? 1 : Retention.Size);
 
     protected override void OnLoad(PackageJson? json)
     {
@@ -20,7 +19,7 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
             if (Contents.ContainsKey(path)) continue;
 
             var parts = GetBackupParts(hash);
-            Contents[path] = method == BackupMethod.Incremental ? new FileTree(parts) : new FileTree(parts.Take(1));
+            Contents[path] = new FileTree(method == BackupMethod.Incremental ? parts : parts.Take(1));
         }
     }
 
@@ -28,7 +27,7 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
     {
         var backups = new Dictionary<string, DirectoryInfo>();
 
-        string backupName = $"{(Json.Parts.Count == 0 ? "FULL" : Method.ToString().ToUpper()[..4])}-{DateTime.Now.Ticks}";
+        string backupName = Json.Parts.Count == 0 ? "FULL" : $"{Method.ToString().ToUpper()[..4]}-{DateTime.Now.Ticks:X}";
 
         var backupFolder = Folder.CreateSubdirectory(backupName);
 
@@ -51,9 +50,9 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
             .ToList();
 }
 
-public class PackageJson
+public class PackageJson(Dictionary<string, string>? paths = null, List<string>? parts = null)
 {
-    public Dictionary<string, string> Paths { get; set; } = new();
-    public List<string> Parts { get; set; } = new();
+    public Dictionary<string, string> Paths { get; set; } = paths ?? new();
+    public List<string> Parts { get; set; } = parts ?? new();
     public DateTime LastWriteTime => DateTime.Now;
 }

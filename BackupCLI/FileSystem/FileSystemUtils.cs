@@ -88,4 +88,14 @@ public static class FileSystemUtils
 
     public static string GetHashedPath(string path, bool isDir)
         => Convert.ToHexString(Hasher.ComputeHash(Encoding.ASCII.GetBytes(NormalizePath(path.ToLower(), isDir))));
+
+    public static Dictionary<string, string> GetHashedPaths(IEnumerable<string> paths)
+        => paths.ToDictionary(p => p, p => GetHashedPath(p, Path.EndsInDirectorySeparator(p)));
+
+    public static List<string> GetOrdereredSubdirectories(DirectoryInfo dir)
+        => dir
+            .EnumerateDirectories("*", TopLevelOptions)
+            .OrderBy(d => d.CreationTime)
+            .Select(d => d.Name)
+            .ToList();
 }

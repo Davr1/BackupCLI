@@ -36,11 +36,9 @@ public class CustomLogger(string path, bool quiet) : ILogger
 
     public void Dispose() => logFile.Dispose();
 
-    public void Error(Exception e) 
-        => this.LogError(0, e, e.Message);
+    public void Error(Exception e) => this.LogError(0, e, e.Message);
 
-    public void Info(string message)
-        => this.LogInformation(message);
+    public void Info(string message) => this.LogInformation(message);
 
     private static Func<string, RichString> GetColor(LogLevel logLevel) => logLevel switch
     {

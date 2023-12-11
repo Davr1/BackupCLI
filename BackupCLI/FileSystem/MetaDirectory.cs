@@ -20,7 +20,7 @@ public abstract class MetaDirectory<TJson> where TJson : class
 
     public TJson Json { get; set; } = null!;
 
-    protected MetaDirectory(DirectoryInfo folder, string metadataFileName = "meta.json", TJson? @default = default)
+    protected MetaDirectory(DirectoryInfo folder, string metadataFileName, TJson? @default = default)
     {
         Folder = folder;
         Folder.Create();

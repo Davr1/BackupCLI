@@ -1,8 +1,6 @@
 ﻿using BackupCLI.Backup;
 using BackupCLI.Helpers;
 using CommandLine;
-using Quartz;
-using Quartz.Impl.Triggers;
 
 namespace BackupCLI;
 
