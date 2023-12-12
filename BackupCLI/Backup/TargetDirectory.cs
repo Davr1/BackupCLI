@@ -4,7 +4,7 @@ using BackupCLI.FileSystem;
 namespace BackupCLI.Backup;
 
 public class TargetDirectory(DirectoryInfo folder, BackupRetention retention, BackupMethod method, List<string> paths)
-    : MetaDirectory<TargetDirectoryJson>(folder, "metadata.json", new(FileSystemUtils.GetOrdereredSubdirectories(folder)))
+    : MetaDirectory<TargetDirectoryJson>(folder, "metadata.json", new(FileSystemUtils.GetOrderedSubdirectories(folder)))
 {
     public FixedQueue<Package> Packages { get; } = new(retention.Count);
     public BackupRetention Retention { get; } = retention;
@@ -22,7 +22,7 @@ public class TargetDirectory(DirectoryInfo folder, BackupRetention retention, Ba
         var packageDir = Directory.CreateDirectory(Path.Join(Folder.FullName, name));
 
         var paths = FileSystemUtils.GetHashedPaths(SourcePaths);
-        var defaultJson = new PackageJson(paths, FileSystemUtils.GetOrdereredSubdirectories(packageDir));
+        var defaultJson = new PackageJson(paths, FileSystemUtils.GetOrderedSubdirectories(packageDir));
 
         var pkg = new Package(packageDir, Retention, Method, defaultJson);
 

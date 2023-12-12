@@ -42,6 +42,9 @@ public static class JsonUtils
     }
 }
 
+/// <summary>
+/// Provides extension methods for <see cref="JsonElement"/> to allow for fallback values and case insensitive property names in a custom parser.
+/// </summary>
 public static class JsonExtensions {
     public static T? DeserializeOrDefault<T>(this JsonElement element, string propertyName, T? @default = default, JsonSerializerOptions? options = null)
     {

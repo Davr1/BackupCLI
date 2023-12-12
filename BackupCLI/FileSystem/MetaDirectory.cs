@@ -4,6 +4,10 @@ using BackupCLI.Helpers;
 
 namespace BackupCLI.FileSystem;
 
+/// <summary>
+/// Directory associated with a single json metadata file located inside
+/// </summary>
+/// <typeparam name="TJson">Type that can be serialized or deserialized into a physical file</typeparam>
 public abstract class MetaDirectory<TJson> where TJson : class
 {
     public DirectoryInfo Folder { get; }
@@ -30,13 +34,21 @@ public abstract class MetaDirectory<TJson> where TJson : class
         LoadMetadata(@default);
     }
 
+    /// <summary>
+    /// Triggered after parsing the json file
+    /// </summary>
     protected virtual void OnLoad(TJson json) { }
 
+    /// <summary>
+    /// Reads the json file from disk and parses it into <see cref="TJson"/>
+    /// </summary>
+    /// <param name="default">Fallback value</param>
     public void LoadMetadata(TJson? @default = default)
     {
+        Json = @default!;
+
         if (!MetadataFile.Exists)
         {
-            Json = @default!;
             SaveMetadata(Json);
         }
         else if (JsonUtils.TryLoadFile(MetadataFile.FullName, out TJson? output, Options))
@@ -47,6 +59,10 @@ public abstract class MetaDirectory<TJson> where TJson : class
         OnLoad(Json);
     }
 
+    /// <summary>
+    /// Writes the json file to disk
+    /// </summary>
+    /// <param name="obj">Optional argument - if null, uses the <see cref="Json"/> property instead</param>
     public void SaveMetadata(TJson? obj = null)
     {
         JsonUtils.TryWriteFile(MetadataFile.FullName, obj ?? Json, Options);

@@ -73,26 +73,33 @@ public static class FileSystemUtils
 
         return true;
     }
+
+    /// <summary>
+    /// Adds or removes a trailing slash to make paths consistent.
+    /// </summary>
     public static string NormalizePath(string path, bool isDir)
         => Path.TrimEndingDirectorySeparator(path) + (isDir ? Path.DirectorySeparatorChar : "");
 
+    /// <returns><see cref="DirectoryInfo"/> with a normalized path in the .FullName property.</returns>
     public static DirectoryInfo FromPath(string path)
         => new (NormalizePath(path, true));
 
     /// <summary>
     /// Strips the absolute path from the <paramref name="dir"/> and returns the relative path to <paramref name="path"/>.
     /// </summary>
-    /// <returns></returns>
     public static string GetRelativePath(DirectoryInfo dir, FileSystemInfo path)
         => Path.GetRelativePath(dir.FullName, path.FullName);
 
+    /// <returns>MD5 hash of the specified path, normalizing it first</returns>
     public static string GetHashedPath(string path, bool isDir)
         => Convert.ToHexString(Hasher.ComputeHash(Encoding.ASCII.GetBytes(NormalizePath(path.ToLower(), isDir))));
 
+    /// <returns>A dictionary of path:hash mapping for the specified <paramref name="paths"/></returns>
     public static Dictionary<string, string> GetHashedPaths(IEnumerable<string> paths)
         => paths.ToDictionary(p => p, p => GetHashedPath(p, Path.EndsInDirectorySeparator(p)));
 
-    public static List<string> GetOrdereredSubdirectories(DirectoryInfo dir)
+    /// <returns>Names of direct subdirectories, ordered by directory creation time. Inaccessible subdirectories are ignored.</returns>
+    public static List<string> GetOrderedSubdirectories(DirectoryInfo dir)
         => dir
             .EnumerateDirectories("*", TopLevelOptions)
             .OrderBy(d => d.CreationTime)

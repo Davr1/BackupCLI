@@ -1,5 +1,8 @@
 ﻿namespace BackupCLI.Collections;
 
+/// <summary>
+/// A queue with a fixed capacity that automatically removes the oldest items when the capacity is exceeded.
+/// </summary>
 public class FixedQueue<T>(int capacity) : Queue<T>
 {
     public int Capacity { get; } = capacity;
