@@ -16,10 +16,6 @@ public class BackupJob
     {
         PrimaryTarget ??= new TargetDirectory(Targets.First(), Retention, Method, Sources.Select(s => s.FullName).ToList());
 
-        Program.Logger.Info($"Performing {Method.ToString().ToLower()} backup: {{ {string.Join(", ", Sources)} }} -> {{ {string.Join(", ", Targets)} }}");
-
-        var watch = System.Diagnostics.Stopwatch.StartNew();
-
         var (package, targets) = PrimaryTarget.CreateBackup();
 
         foreach (var source in Sources)
@@ -47,17 +43,14 @@ public class BackupJob
                     new DirectoryInfo(Path.Join(PrimaryTarget.Folder.FullName, path)).CopyTo(Path.Join(target.FullName, path));
             }
         }
-
-        watch.Stop();
-        Program.Logger.Info($"Took {watch.ElapsedMilliseconds} ms");
     }
 
-    private static void BackupDirectory(DirectoryInfo source, string target, FileTree packageParts)
+    private static void BackupDirectory(DirectoryInfo source, string target, FileTree packageContent)
     {
         Directory.CreateDirectory(target);
 
         // there is nothing to compare, copy the folder right away
-        if (packageParts.Sources.Count == 0)
+        if (packageContent.Sources.Count == 0)
         {
             source.TryCopyTo(target, true);
             return;
@@ -68,8 +61,10 @@ public class BackupJob
         {
             string relativePath = FileSystemUtils.GetRelativePath(source, dir);
 
-            if (!Directory.Exists(packageParts.GetFullPath(relativePath + "\\")) &&
-                !Directory.Exists(Path.Join(target, relativePath)))
+            string? previousBackup = packageContent.GetFullPath(FileSystemUtils.NormalizePath(relativePath, true));
+            string currentBackup = Path.Join(target, relativePath);
+
+            if (!Directory.Exists(previousBackup) && !Directory.Exists(currentBackup))
                 dir.TryCopyTo(Path.Join(target, relativePath), true);
         }
 
@@ -81,7 +76,7 @@ public class BackupJob
             if (File.Exists(Path.Join(target, relativePath))) continue;
 
             // file was present in the previous backups
-            if (packageParts.GetFile(relativePath) is FileInfo backupFile)
+            if (packageContent.GetFile(relativePath) is FileInfo backupFile)
             {
                 // compare metadata and hash
                 if (FileSystemUtils.AreIdentical(file, backupFile)) continue;
@@ -93,6 +88,7 @@ public class BackupJob
         }
     }
 }
+
 public class BackupRetention
 {
     public int Count { get; set; } = 5;

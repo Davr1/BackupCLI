@@ -49,7 +49,8 @@ public class FileTree
         {
             string relativePath = fsInfo.FullName.Replace(sourceDir, "").ToLower();
 
-            if (fsInfo.Attributes.HasFlag(FileAttributes.Directory)) relativePath += Path.DirectorySeparatorChar;
+            if (fsInfo.Attributes.HasFlag(FileAttributes.Directory))
+                relativePath += Path.DirectorySeparatorChar;
 
             Tree[relativePath] = Sources.Count - 1;
         }
