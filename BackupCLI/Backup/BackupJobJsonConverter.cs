@@ -6,6 +6,9 @@ using Quartz;
 
 namespace BackupCLI.Backup;
 
+/// <summary>
+/// Provides a custom parser for <see cref="BackupJob"/> json files while also checking the validity of the input.
+/// </summary>
 public class BackupJobJsonConverter : JsonConverter<BackupJob>
 {
     public override BackupJob Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -36,7 +39,7 @@ public class BackupJobJsonConverter : JsonConverter<BackupJob>
         if (backupJob.Targets.Any(target => backupJob.Sources.Any(source => FileSystemUtils.AreDirectAncestors(source, target))))
             throw new ArgumentException("Targets cannot be direct ancestors of sources (and vice versa).");
 
-        //timing
+        // timing
         backupJob.Timing = root.DeserializeOrDefault<CronExpression>("timing", options: Options)!;
 
         // retention
@@ -63,6 +66,9 @@ public class BackupJobJsonConverter : JsonConverter<BackupJob>
     };
 }
 
+/// <summary>
+/// Custom parser for <see cref="CronExpression"/> that converts standard cron expressions to quartz format.
+/// </summary>
 public class CronConverter : JsonConverter<CronExpression>
 {
     public override CronExpression Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

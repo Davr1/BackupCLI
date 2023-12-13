@@ -3,6 +3,13 @@ using BackupCLI.FileSystem;
 
 namespace BackupCLI.Backup;
 
+/// <summary>
+/// Represents the target directory where <see cref="Package"/>s are saved to.
+/// </summary>
+/// <param name="folder">The target folder</param>
+/// <param name="retention">The maximum amount of packages this directory can hold is specified by <see cref="BackupRetention.Count"/></param>
+/// <param name="method">See <see cref="BackupMethod"/></param>
+/// <param name="paths">The source directories that are copied into the packages</param>
 public class TargetDirectory(DirectoryInfo folder, BackupRetention retention, BackupMethod method, List<string> paths)
     : MetaDirectory<TargetDirectoryJson>(folder, "metadata.json", new(FileSystemUtils.GetOrderedSubdirectories(folder)))
 {
@@ -38,8 +45,8 @@ public class TargetDirectory(DirectoryInfo folder, BackupRetention retention, Ba
         return Packages.Last!;
     }
 
-    public (Package package, Dictionary<string, DirectoryInfo> targets) CreateBackup()
-        => (GetLatestPackage(), GetLatestPackage().CreateBackup());
+    public Dictionary<string, DirectoryInfo> CreateBackupFolders()
+        => GetLatestPackage().CreateBackupFolders();
 }
 
 public class TargetDirectoryJson(List<string>? packages = null)

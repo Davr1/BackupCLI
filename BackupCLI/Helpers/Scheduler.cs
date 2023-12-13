@@ -39,7 +39,7 @@ public static class Scheduler
 
             ITrigger trigger = TriggerBuilder
                 .Create()
-                .WithCronSchedule(job.Timing.CronExpressionString)
+                .WithSchedule(CronScheduleBuilder.CronSchedule(job.Timing))
                 .StartNow()
                 .Build();
 

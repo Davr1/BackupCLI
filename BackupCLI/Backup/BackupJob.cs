@@ -12,12 +12,17 @@ public class BackupJob
     public BackupMethod Method { get; set; } = default;
     public TargetDirectory? PrimaryTarget { get; set; }
 
+    /// <summary>
+    /// Immediately runs the backup job.
+    /// </summary>
     public void PerformBackup()
     {
         PrimaryTarget ??= new TargetDirectory(Targets.First(), Retention, Method, Sources.Select(s => s.FullName).ToList());
 
-        var (package, targets) = PrimaryTarget.CreateBackup();
+        var package = PrimaryTarget.GetLatestPackage();
+        var targets = PrimaryTarget.CreateBackupFolders();
 
+        // copies the source directories to the primary target
         foreach (var source in Sources)
         {
             // only folders inside the current package.json will be copied
@@ -39,12 +44,16 @@ public class BackupJob
 
                 pkg.MetadataFile.TryCopyTo(Path.Join(mirrorPkg.FullName, pkg.MetadataFileName), true);
 
-                foreach (var path in pkg.Json.Parts.Select(part => Path.Join(pkg.Folder.Name, part)))
+                foreach (var path in pkg.Json.Backups.Select(part => Path.Join(pkg.Folder.Name, part)))
                     new DirectoryInfo(Path.Join(PrimaryTarget.Folder.FullName, path)).CopyTo(Path.Join(target.FullName, path));
             }
         }
     }
 
+    /// <summary>
+    /// Copies the source directory to the target directory.
+    /// <paramref name="packageContent"/> is used to compare the current state of the source and target directories to the previous backups in the same package.
+    /// </summary>
     private static void BackupDirectory(DirectoryInfo source, string target, FileTree packageContent)
     {
         Directory.CreateDirectory(target);
@@ -68,6 +77,7 @@ public class BackupJob
                 dir.TryCopyTo(Path.Join(target, relativePath), true);
         }
 
+        // copy the files that were modified or added
         foreach (var file in source.EnumerateFiles("*", FileSystemUtils.RecursiveOptions))
         {
             string relativePath = FileSystemUtils.GetRelativePath(source, file);
@@ -91,13 +101,28 @@ public class BackupJob
 
 public class BackupRetention
 {
+    /// <summary>
+    /// The maximum amount of packages that a target directory can hold.
+    /// </summary>
     public int Count { get; set; } = 5;
+    /// <summary>
+    /// The maximum amount of backups that a package can hold.
+    /// </summary>
     public int Size { get; set; } = 5;
 }
 
 public enum BackupMethod
 {
+    /// <summary>
+    /// A single package that contains a full copy of the source directories.
+    /// </summary>
     Full,
+    /// <summary>
+    /// Multiple packages that contain the changes made after the last full package.
+    /// </summary>
     Differential,
+    /// <summary>
+    /// Multiple packages that contain the changes made after the last full or incremental package.
+    /// </summary>
     Incremental
 }

@@ -31,7 +31,7 @@ public class Program
         if (!JsonUtils.TryLoadFile(options.File, out List<BackupJob>? jobs, BackupJobJsonConverter.Options)) return;
 
         Logger.Info($"Successfully loaded {jobs!.Count} jobs");
-
+        
         Scheduler.SetupCronJobs(jobs).Wait();
 
         Task.Delay(-1).Wait();

@@ -1,10 +1,12 @@
 ﻿namespace BackupCLI.FileSystem;
 
 /// <summary>
-/// Extension methods for <see cref="FileSystemInfo"/>.
+/// Extension methods for <see cref="FileSystemInfo"/>. Allows for recursively copying directories, and handling errors while doing so.
 /// </summary>
 public static class FileSystemExtensions
 {
+    /* this is a bit scuffed, but FileInfo and DirectoryInfo can't be extended, so I really don't know a cleaner way to handle the different types
+    A wrapper class/struct could be used, but more memory allocations and boxing/unboxing would be required, so I'm not sure if it's worth it*/
     public static FileSystemInfo? CopyTo(this FileSystemInfo source, string destName, bool overwrite = false) =>
         source switch
         {
@@ -27,6 +29,9 @@ public static class FileSystemExtensions
         }
     }
 
+    /// <summary>
+    /// Recursively copies a directory.
+    /// </summary>
     public static DirectoryInfo CopyTo(this DirectoryInfo source, string destDirName, bool overwrite = false)
     {
         var dir = new DirectoryInfo(destDirName);

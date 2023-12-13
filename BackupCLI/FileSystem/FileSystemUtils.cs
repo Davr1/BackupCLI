@@ -18,8 +18,8 @@ public static class FileSystemUtils
     /// </summary>
     public static bool AreDirectAncestors(DirectoryInfo left, DirectoryInfo right)
     {
-        left = FromPath(left.FullName);
-        right = FromPath(right.FullName);
+        left = FromPath(left.FullName.ToLower());
+        right = FromPath(right.FullName.ToLower());
 
         if (left.FullName == right.FullName) return true;
 
