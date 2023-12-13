@@ -66,9 +66,9 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
             .ToList();
 }
 
-public class PackageJson(Dictionary<string, string>? paths = null, List<string>? parts = null)
+public class PackageJson(Dictionary<string, string>? paths = null, List<string>? backups = null)
 {
     public Dictionary<string, string> Paths { get; set; } = paths ?? new();
-    public List<string> Backups { get; set; } = parts ?? new();
+    public List<string> Backups { get; set; } = backups ?? new();
     public DateTime LastWriteTime => DateTime.Now;
 }

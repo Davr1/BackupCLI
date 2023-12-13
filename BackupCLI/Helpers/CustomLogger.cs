@@ -16,6 +16,8 @@ public class CustomLogger(string path, bool quiet) : ILogger
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception, string> _)
     {
         string time = DateTime.Now.ToString(CultureInfo.InvariantCulture);
+        string? standardMessage = state?.ToString();
+        string? logMessage = exception is null ? state?.ToString() : exception.ToString();
 
         if (!quiet)
         {
@@ -23,15 +25,15 @@ public class CustomLogger(string path, bool quiet) : ILogger
             var levelString = GetColor(logLevel)($"[{logLevel}]");
 
             #if DEBUG
-                string? message = exception is null ? state?.ToString() : exception.ToString();
+                string? message = logMessage;
             #else
-                string? message = state?.ToString();
+                string? message = standardMessage;
             #endif
 
             ColoredConsole.WriteLine($"{timeString} {levelString} {message}");
         }
 
-        logFile.WriteLine($"[{time}] [{logLevel}] {exception}");
+        logFile.WriteLine($"[{time}] [{logLevel}] {logMessage}");
     }
 
     public void Dispose() => logFile.Dispose();
