@@ -49,26 +49,33 @@ public static class FileSystemUtils
         if (!left.Exists || !right.Exists) return false;
         if (left.Length == right.Length && left.LastWriteTime == right.LastWriteTime) return true;
 
-        // the word size on a 64bit processor
-        const int size = sizeof(long);
-
-        int iterations = (int)Math.Ceiling((double)left.Length / size);
-
-        using var leftStream = left.OpenRead();
-        using var rightStream = right.OpenRead();
-
-        byte[] leftBuffer = new byte[size];
-        byte[] rightBuffer = new byte[size];
-
-        // reads the files chunk by chunk and compares them
-        for (int i = 0; i < iterations; i++)
+        try
         {
-            leftStream.Read(leftBuffer, 0, size);
-            rightStream.Read(rightBuffer, 0, size);
+            // the word size on a 64bit processor
+            const int size = sizeof(long);
 
-            // early return if the two chunks are not equal - this is much faster than unconditionally hashing the entire file
-            if (BitConverter.ToInt64(leftBuffer, 0) != BitConverter.ToInt64(rightBuffer, 0))
-                return false;
+            int iterations = (int)Math.Ceiling((double)left.Length / size);
+
+            using var leftStream = left.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var rightStream = right.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+
+            byte[] leftBuffer = new byte[size];
+            byte[] rightBuffer = new byte[size];
+
+            // reads the files chunk by chunk and compares them
+            for (int i = 0; i < iterations; i++)
+            {
+                leftStream.Read(leftBuffer, 0, size);
+                rightStream.Read(rightBuffer, 0, size);
+
+                // early return if the two chunks are not equal - this is much faster than unconditionally hashing the entire file
+                if (BitConverter.ToInt64(leftBuffer, 0) != BitConverter.ToInt64(rightBuffer, 0))
+                    return false;
+            }
+        }
+        catch (Exception e)
+        {
+            Program.Logger.Error(e);
         }
 
         return true;
@@ -94,8 +101,10 @@ public static class FileSystemUtils
 
     /// <returns>Names of direct subdirectories, ordered by directory creation time. Inaccessible subdirectories are ignored.</returns>
     public static List<string> GetOrderedSubdirectories(DirectoryInfo dir)
-        => [..dir
-            .EnumerateDirectories("*", TopLevelOptions)
+    {
+        dir.Create();
+        return [..dir.EnumerateDirectories("*", TopLevelOptions)
             .OrderBy(d => d.CreationTime)
             .Select(d => d.Name)];
+    }
 }
