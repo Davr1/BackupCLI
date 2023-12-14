@@ -44,9 +44,6 @@ public class TargetDirectory(DirectoryInfo folder, BackupRetention retention, Ba
 
         return Packages.Last!;
     }
-
-    public Dictionary<string, DirectoryInfo> CreateBackupFolders()
-        => GetLatestPackage().CreateBackupFolders();
 }
 
 public class TargetDirectoryJson(List<string>? packages = null)

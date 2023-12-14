@@ -84,12 +84,6 @@ public static class FileSystemUtils
     public static DirectoryInfo FromPath(string path)
         => new (NormalizePath(path, true));
 
-    /// <summary>
-    /// Strips the absolute path from the <paramref name="dir"/> and returns the relative path to <paramref name="path"/>.
-    /// </summary>
-    public static string GetRelativePath(DirectoryInfo dir, FileSystemInfo path)
-        => Path.GetRelativePath(dir.FullName, path.FullName);
-
     /// <returns>MD5 hash of the specified path, normalizing it first</returns>
     public static string GetHashedPath(string path, bool isDir)
         => Convert.ToHexString(Hasher.ComputeHash(Encoding.ASCII.GetBytes(NormalizePath(path.ToLower(), isDir))));

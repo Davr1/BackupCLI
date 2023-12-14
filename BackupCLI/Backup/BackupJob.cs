@@ -20,7 +20,7 @@ public class BackupJob
         PrimaryTarget ??= new TargetDirectory(Targets.First(), Retention, Method, Sources.Select(s => s.FullName).ToList());
 
         var package = PrimaryTarget.GetLatestPackage();
-        var targets = PrimaryTarget.CreateBackupFolders();
+        var targets = package.CreateBackupFolders();
 
         // copies the source directories to the primary target
         foreach (var source in Sources)
@@ -30,6 +30,8 @@ public class BackupJob
             if (!targets.TryGetValue(source.FullName, out var target)) continue;
 
             BackupDirectory(source, target.FullName, package.Contents[source.FullName]);
+
+            // update the file tree with the newly copied files
             package.Contents[source.FullName].Add(target);
         }
 
@@ -65,36 +67,31 @@ public class BackupJob
             return;
         }
 
-        // copy all the new folders
-        foreach (var dir in source.EnumerateDirectories("*", FileSystemUtils.RecursiveOptions))
+        foreach (var fsinfo in source.EnumerateFileSystemInfos("*", FileSystemUtils.RecursiveOptions))
         {
-            string relativePath = FileSystemUtils.GetRelativePath(source, dir);
-
-            string? previousBackup = packageContent.GetFullPath(FileSystemUtils.NormalizePath(relativePath, true));
+            string relativePath = Path.GetRelativePath(source.FullName, fsinfo.FullName);
             string currentBackup = Path.Join(target, relativePath);
 
-            if (!Directory.Exists(previousBackup) && !Directory.Exists(currentBackup))
-                dir.TryCopyTo(Path.Join(target, relativePath), true);
-        }
-
-        // copy the files that were modified or added
-        foreach (var file in source.EnumerateFiles("*", FileSystemUtils.RecursiveOptions))
-        {
-            string relativePath = FileSystemUtils.GetRelativePath(source, file);
-
-            // file was copied in the previous step
-            if (File.Exists(Path.Join(target, relativePath))) continue;
-
-            // file was present in the previous backups
-            if (packageContent.GetFile(relativePath) is FileInfo backupFile)
+            if (fsinfo is DirectoryInfo)
             {
-                // compare metadata and hash
-                if (FileSystemUtils.AreIdentical(file, backupFile)) continue;
+                if (Directory.Exists(currentBackup)) continue;
+
+                // directory was present in the previous backups
+                if (packageContent.GetDirectory(relativePath) is not null) continue;
             }
 
-            // copy the file
-            Directory.CreateDirectory(Path.Join(target, relativePath[..^file.Name.Length]));
-            file.TryCopyTo(Path.Join(target, relativePath));
+            if (fsinfo is FileInfo file)
+            {
+                if (File.Exists(currentBackup)) continue;
+
+                // file was present in the previous backups - continue if the current file hasn't changed
+                if (packageContent.GetFile(relativePath) is FileInfo backupFile)
+                    if (FileSystemUtils.AreIdentical(file, backupFile)) continue;
+
+                Directory.CreateDirectory(Path.GetDirectoryName(currentBackup)!);
+            }
+
+            fsinfo.TryCopyTo(currentBackup, true);
         }
     }
 }

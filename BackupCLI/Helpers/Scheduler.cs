@@ -21,7 +21,7 @@ public static class Scheduler
             job.PerformBackup();
 
             watch.Stop();
-            Program.Logger.Info($"Took {watch.ElapsedMilliseconds} ms");
+            Program.Logger.Info($@"Took {watch.Elapsed:h\:mm\:ss}");
 
             return Task.CompletedTask;
         }
