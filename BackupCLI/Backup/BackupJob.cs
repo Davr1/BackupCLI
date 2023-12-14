@@ -32,7 +32,8 @@ public class BackupJob
             BackupDirectory(source, target.FullName, package.Contents[source.FullName]);
 
             // update the file tree with the newly copied files
-            package.Contents[source.FullName].Add(target);
+            if (Method == BackupMethod.Incremental)
+                package.Contents[source.FullName].Add(target);
         }
 
         // mirrors the primary target to other targets
