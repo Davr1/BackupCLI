@@ -18,7 +18,14 @@ public static class Scheduler
 
             Program.Logger.Info($"Performing {job.Method.ToString().ToLower()} backup: {{ {string.Join(", ", job.Sources)} }} -> {{ {string.Join(", ", job.Targets)} }}");
 
-            job.PerformBackup();
+            try
+            {
+                job.PerformBackup();
+            }
+            catch (Exception e)
+            {
+                Program.Logger.Error(e);
+            }
 
             watch.Stop();
             Program.Logger.Info($@"Took {watch.Elapsed:h\:mm\:ss}");
