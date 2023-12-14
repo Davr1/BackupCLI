@@ -1,4 +1,5 @@
-﻿using BackupCLI.FileSystem;
+﻿using BackupCLI.Helpers.Extensions;
+using BackupCLI.Helpers.FileSystem;
 using Quartz;
 
 namespace BackupCLI.Backup;
@@ -17,7 +18,7 @@ public class BackupJob
     /// </summary>
     public void PerformBackup()
     {
-        PrimaryTarget ??= new TargetDirectory(Targets.First(), Retention, Method, Sources.Select(s => s.FullName).ToList());
+        PrimaryTarget ??= new TargetDirectory(Targets.First(), Retention, Method, [..Sources.Select(s => s.FullName)]);
 
         var package = PrimaryTarget.GetLatestPackage();
         var targets = package.CreateBackupFolders();
@@ -31,9 +32,7 @@ public class BackupJob
 
             BackupDirectory(source, target.FullName, package.Contents[source.FullName]);
 
-            // update the file tree with the newly copied files
-            if (Method == BackupMethod.Incremental)
-                package.Contents[source.FullName].Add(target);
+            package.Update(source.FullName, target);
         }
 
         // mirrors the primary target to other targets
@@ -62,7 +61,7 @@ public class BackupJob
         Directory.CreateDirectory(target);
 
         // there is nothing to compare, copy the folder right away
-        if (packageContent.Sources.Count == 0)
+        if (packageContent.Count == 0)
         {
             source.TryCopyTo(target, true);
             return;
@@ -95,32 +94,4 @@ public class BackupJob
             fsinfo.TryCopyTo(currentBackup, true);
         }
     }
-}
-
-public class BackupRetention
-{
-    /// <summary>
-    /// The maximum amount of packages that a target directory can hold.
-    /// </summary>
-    public int Count { get; set; } = 5;
-    /// <summary>
-    /// The maximum amount of backups that a package can hold.
-    /// </summary>
-    public int Size { get; set; } = 5;
-}
-
-public enum BackupMethod
-{
-    /// <summary>
-    /// A single package that contains a full copy of the source directories.
-    /// </summary>
-    Full,
-    /// <summary>
-    /// Multiple packages that contain the changes made after the last full package.
-    /// </summary>
-    Differential,
-    /// <summary>
-    /// Multiple packages that contain the changes made after the last full or incremental package.
-    /// </summary>
-    Incremental
 }

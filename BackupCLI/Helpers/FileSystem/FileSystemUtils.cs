@@ -1,7 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 
-namespace BackupCLI.FileSystem;
+namespace BackupCLI.Helpers.FileSystem;
 
 public static class FileSystemUtils
 {
@@ -82,7 +82,7 @@ public static class FileSystemUtils
 
     /// <returns><see cref="DirectoryInfo"/> with a normalized path in the .FullName property.</returns>
     public static DirectoryInfo FromPath(string path)
-        => new (NormalizePath(path, true));
+        => new(NormalizePath(path, true));
 
     /// <returns>MD5 hash of the specified path, normalizing it first</returns>
     public static string GetHashedPath(string path, bool isDir)
@@ -94,9 +94,8 @@ public static class FileSystemUtils
 
     /// <returns>Names of direct subdirectories, ordered by directory creation time. Inaccessible subdirectories are ignored.</returns>
     public static List<string> GetOrderedSubdirectories(DirectoryInfo dir)
-        => dir
+        => [..dir
             .EnumerateDirectories("*", TopLevelOptions)
             .OrderBy(d => d.CreationTime)
-            .Select(d => d.Name)
-            .ToList();
+            .Select(d => d.Name)];
 }

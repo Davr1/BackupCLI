@@ -1,4 +1,6 @@
-﻿namespace BackupCLI.FileSystem;
+﻿using BackupCLI.Helpers.FileSystem;
+
+namespace BackupCLI.Helpers.Extensions;
 
 /// <summary>
 /// Extension methods for <see cref="FileSystemInfo"/>. Allows for recursively copying directories, and handling errors while doing so.

@@ -1,8 +1,8 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using BackupCLI.Helpers;
+using BackupCLI.Helpers.Json;
 
-namespace BackupCLI.FileSystem;
+namespace BackupCLI.Helpers.FileSystem;
 
 /// <summary>
 /// Directory associated with a single json metadata file located inside
@@ -13,7 +13,7 @@ public abstract class MetaDirectory<TJson> where TJson : class
     public DirectoryInfo Folder { get; }
     public string MetadataFileName { get; }
     public FileInfo MetadataFile => new(Path.Join(Folder.FullName, MetadataFileName));
-    protected List<DirectoryInfo> Subdirectories => Folder.GetDirectories().ToList();
+    protected List<DirectoryInfo> Subdirectories => [..Folder.GetDirectories()];
     protected virtual JsonSerializerOptions Options { get; set; } = new()
     {
         WriteIndented = true,

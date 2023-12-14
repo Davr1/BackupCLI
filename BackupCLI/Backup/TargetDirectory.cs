@@ -1,5 +1,5 @@
-﻿using BackupCLI.Collections;
-using BackupCLI.FileSystem;
+﻿using BackupCLI.Helpers.Collections;
+using BackupCLI.Helpers.FileSystem;
 
 namespace BackupCLI.Backup;
 
@@ -35,7 +35,7 @@ public class TargetDirectory(DirectoryInfo folder, BackupRetention retention, Ba
 
         Packages.Enqueue(pkg);
         
-        SaveMetadata(new(Packages.Select(p => p.Folder.Name).ToList()));
+        SaveMetadata(new([..Packages.Select(p => p.Folder.Name)]));
     }
 
     public Package GetLatestPackage()
@@ -48,6 +48,6 @@ public class TargetDirectory(DirectoryInfo folder, BackupRetention retention, Ba
 
 public class TargetDirectoryJson(List<string>? packages = null)
 {
-    public List<string> Packages { get; set; } = packages ?? new();
+    public List<string> Packages { get; set; } = packages ?? [];
     public string? CurrentPackage => Packages.LastOrDefault();
 }

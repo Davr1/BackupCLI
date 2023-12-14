@@ -1,11 +1,11 @@
-﻿namespace BackupCLI.FileSystem;
+﻿namespace BackupCLI.Helpers.FileSystem;
 
 /// <summary>
 /// Simulated flattened file system tree with references to the actual files from multiple sources.
 /// </summary>
 public class FileTree
 {
-    public List<DirectoryInfo> Sources { get; } = new();
+    private readonly List<DirectoryInfo> _sources = [];
 
     /// <summary>
     /// Relative paths mapped to the index of the source directory they belong to. Directory paths have a trailing backslash.
@@ -14,15 +14,17 @@ public class FileTree
     /// => <c>2</c>
     /// </example>
     /// </summary>
-    private Dictionary<string, int> Tree { get; } = new();
+    private readonly Dictionary<string, int> _tree = new();
 
-    public string GetFullPath(int index, string relativePath) => Path.Join(Sources[index].FullName, relativePath);
+    public int Count => _sources.Count;
+
+    public string GetFullPath(int index, string relativePath) => Path.Join(_sources[index].FullName, relativePath);
 
     public string? GetFullPath(string relativePath)
     {
-        if (Sources.Count == 1) return GetFullPath(0, relativePath);
+        if (_sources.Count == 1) return GetFullPath(0, relativePath);
 
-        return Tree.TryGetValue(relativePath.ToLower(), out int idx) ? GetFullPath(idx, relativePath) : null;
+        return _tree.TryGetValue(relativePath.ToLower(), out int idx) ? GetFullPath(idx, relativePath) : null;
     }
 
     public FileInfo? GetFile(string relativePath)
@@ -31,16 +33,16 @@ public class FileTree
     public DirectoryInfo? GetDirectory(string relativePath)
         => GetFullPath(relativePath + Path.DirectorySeparatorChar) is string path ? new(path) : null;
 
-    public FileTree(params DirectoryInfo[] sources) : this(sources.AsEnumerable()) { }
+    public FileTree(params DirectoryInfo[] sources) => AddRange(sources);
 
-    public FileTree(IEnumerable<DirectoryInfo> sources)
+    public void AddRange(params DirectoryInfo[] sources)
     {
         foreach (var source in sources) Add(source);
     }
 
     public void Add(DirectoryInfo source)
     {
-        Sources.Add(source);
+        _sources.Add(source);
         source.Create();
 
         var sourceDir = FileSystemUtils.NormalizePath(source.FullName, true);
@@ -52,7 +54,7 @@ public class FileTree
             if (fsInfo.Attributes.HasFlag(FileAttributes.Directory))
                 relativePath += Path.DirectorySeparatorChar;
 
-            Tree[relativePath] = Sources.Count - 1;
+            _tree[relativePath] = _sources.Count - 1;
         }
     }
 }

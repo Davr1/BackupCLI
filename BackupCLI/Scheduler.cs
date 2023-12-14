@@ -3,7 +3,7 @@ using Quartz;
 using Quartz.Impl;
 using System.Diagnostics;
 
-namespace BackupCLI.Helpers;
+namespace BackupCLI;
 
 public static class Scheduler
 {

@@ -1,5 +1,5 @@
-﻿using BackupCLI.Collections;
-using BackupCLI.FileSystem;
+﻿using BackupCLI.Helpers.Collections;
+using BackupCLI.Helpers.FileSystem;
 
 namespace BackupCLI.Backup;
 
@@ -26,8 +26,7 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
         {
             if (Contents.ContainsKey(path)) continue;
 
-            var parts = GetBackupParts(hash);
-            Contents[path] = new FileTree(Method == BackupMethod.Incremental ? parts : parts.Take(1));
+            Update(path, [..GetBackupParts(hash)]);
         }
     }
 
@@ -60,15 +59,37 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
     public void Dispose() => Folder.Delete(true);
 
     public List<DirectoryInfo> GetBackupParts(string name)
-        => Json.Backups
+    {
+        var parts = Json.Backups
             .Select(dir => new DirectoryInfo(Path.Join(Folder.FullName, dir, name)))
             .OrderBy(dir => dir.CreationTime)
             .ToList();
+
+        return Method switch
+        {
+            BackupMethod.Full => [ parts.Single() ],
+            BackupMethod.Differential => [ parts.First() ],
+            _ => parts
+        };
+    }
+
+    /// <summary>
+    /// Updates the package contents for a given path with externally generated backups.
+    /// </summary>
+    /// <param name="path">The source path</param>
+    /// <param name="backups">Filled backups</param>
+    public void Update(string path, params DirectoryInfo[] backups)
+    {
+        if (!Contents.ContainsKey(path))
+            Contents[path] = new FileTree(backups);
+        else if (Method == BackupMethod.Incremental || Contents[path].Count == 0)
+            Contents[path].AddRange(backups);
+    }
 }
 
 public class PackageJson(Dictionary<string, string>? paths = null, List<string>? backups = null)
 {
-    public Dictionary<string, string> Paths { get; set; } = paths ?? new();
-    public List<string> Backups { get; set; } = backups ?? new();
+    public Dictionary<string, string> Paths { get; set; } = paths ?? [];
+    public List<string> Backups { get; set; } = backups ?? [];
     public DateTime LastWriteTime => DateTime.Now;
 }

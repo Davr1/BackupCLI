@@ -3,11 +3,11 @@ using Colors.Net;
 using Microsoft.Extensions.Logging;
 using static Colors.Net.StringStaticMethods;
 
-namespace BackupCLI.Helpers;
+namespace BackupCLI;
 
 public class CustomLogger(string path, bool quiet) : ILogger
 {
-    private readonly StreamWriter logFile = new(path, append: true) { AutoFlush = true };
+    private readonly StreamWriter _logFile = new(path, append: true) { AutoFlush = true };
 
     public IDisposable BeginScope<TState>(TState state) where TState : notnull => default!;
 
@@ -33,10 +33,10 @@ public class CustomLogger(string path, bool quiet) : ILogger
             ColoredConsole.WriteLine($"{timeString} {levelString} {message}");
         }
 
-        logFile.WriteLine($"[{time}] [{logLevel}] {logMessage}");
+        _logFile.WriteLine($"[{time}] [{logLevel}] {logMessage}");
     }
 
-    public void Dispose() => logFile.Dispose();
+    public void Dispose() => _logFile.Dispose();
 
     public void Error(Exception e) => this.LogError(0, e, e.Message);
 

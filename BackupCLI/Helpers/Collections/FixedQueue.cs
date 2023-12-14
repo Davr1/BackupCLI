@@ -1,4 +1,4 @@
-﻿namespace BackupCLI.Collections;
+﻿namespace BackupCLI.Helpers.Collections;
 
 /// <summary>
 /// A queue with a fixed capacity that automatically removes the oldest items when the capacity is exceeded.
