@@ -27,7 +27,7 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
             if (Contents.ContainsKey(path)) continue;
 
             var parts = GetBackupParts(hash);
-            Contents[path] = new FileTree(method == BackupMethod.Incremental ? parts : parts.Take(1));
+            Contents[path] = new FileTree(Method == BackupMethod.Incremental ? parts : parts.Take(1));
         }
     }
 

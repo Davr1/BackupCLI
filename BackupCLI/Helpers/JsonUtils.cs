@@ -1,9 +1,19 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+using BackupCLI.Backup;
 
 namespace BackupCLI.Helpers;
 
 public static class JsonUtils
 {
+    public static readonly JsonSerializerOptions Options = new()
+    {
+        WriteIndented = true,
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter(), new BackupJobJsonConverter(), new BackupJobJsonListConverter(), new CronConverter() },
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+
     public static T LoadFile<T>(string path, JsonSerializerOptions? options = null)
     {
         if (JsonSerializer.Deserialize<T>(File.ReadAllText(path), options) is not { } json)

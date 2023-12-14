@@ -20,7 +20,7 @@ public class BackupJobJsonConverter : JsonConverter<BackupJob>
         var backupJob = new BackupJob();
 
         // sources
-        if (root.DeserializeOrDefault<List<string>>("sources", options: Options) is { Count: > 0 } sources)
+        if (root.DeserializeOrDefault<List<string>>("sources", options: options) is { Count: > 0 } sources)
         {
             if (sources.Where(s => !Directory.Exists(s)).ToList() is { Count: > 0 } invalidSources)
                 throw new DirectoryNotFoundException($"Missing source directories: {{ {string.Join(", ", invalidSources)} }}");
@@ -30,7 +30,7 @@ public class BackupJobJsonConverter : JsonConverter<BackupJob>
         else throw new JsonException("Sources list is missing or empty");
 
         // targets
-        if (root.DeserializeOrDefault<List<string>>("targets", options: Options) is { Count: > 0 } targets)
+        if (root.DeserializeOrDefault<List<string>>("targets", options: options) is { Count: > 0 } targets)
             backupJob.Targets = targets.Select(Directory.CreateDirectory).ToList();
         else
             throw new JsonException("Targets list is missing or empty");
@@ -40,13 +40,13 @@ public class BackupJobJsonConverter : JsonConverter<BackupJob>
             throw new ArgumentException("Targets cannot be direct ancestors of sources (and vice versa).");
 
         // timing
-        backupJob.Timing = root.DeserializeOrDefault<CronExpression>("timing", options: Options)!;
+        backupJob.Timing = root.DeserializeOrDefault<CronExpression>("timing", options: options)!;
 
         // retention
-        backupJob.Retention = root.DeserializeOrDefault<BackupRetention>("retention", new(), Options)!;
+        backupJob.Retention = root.DeserializeOrDefault<BackupRetention>("retention", new(), options)!;
 
         // method
-        backupJob.Method = root.DeserializeOrDefault<BackupMethod>("method", options: Options);
+        backupJob.Method = root.DeserializeOrDefault<BackupMethod>("method", options: options);
 
         if (backupJob.Method == BackupMethod.Full)
             backupJob.Retention.Size = 1;
@@ -56,14 +56,40 @@ public class BackupJobJsonConverter : JsonConverter<BackupJob>
 
     public override void Write(Utf8JsonWriter writer, BackupJob value, JsonSerializerOptions options)
         => throw new NotImplementedException();
+}
 
-    public static readonly JsonSerializerOptions Options = new()
+/// <summary>
+/// Provides a custom parser for the entire json file, and checks for duplicate targets.
+/// </summary>
+public class BackupJobJsonListConverter : JsonConverter<List<BackupJob>>
+{
+    public override List<BackupJob>? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        WriteIndented = true,
-        PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter(), new BackupJobJsonConverter(), new CronConverter() },
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-    };
+        using JsonDocument document = JsonDocument.ParseValue(ref reader);
+
+        var root = document.RootElement;
+
+        var jobs = new List<BackupJob>();
+
+        if (root.ValueKind == JsonValueKind.Object && root.Deserialize<BackupJob>(options) is { } backupJob)
+            jobs.Add(backupJob);
+        else if (root.ValueKind == JsonValueKind.Array && root.Deserialize<BackupJob[]>(options) is { } backupJobs)
+            jobs.AddRange(backupJobs);
+        else return null;
+
+        jobs.RemoveAll(job => job is null);
+
+        var targets = jobs.SelectMany(job => job.Targets).ToList();
+        var uniqueTargets = targets.DistinctBy(t => FileSystemUtils.NormalizePath(t.FullName.ToLower(), true)).ToList();
+
+        if (targets.Count != uniqueTargets.Count)
+            throw new JsonException("There cannot be any duplicate targets.");
+
+        return jobs;
+    }
+
+    public override void Write(Utf8JsonWriter writer, List<BackupJob> value, JsonSerializerOptions options)
+        => throw new NotImplementedException();
 }
 
 /// <summary>
