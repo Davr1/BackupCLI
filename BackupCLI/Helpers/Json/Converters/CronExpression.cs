@@ -14,13 +14,13 @@ public class CronConverter : JsonConverter<CronExpression>
         if (reader.TokenType != JsonTokenType.String)
             throw new JsonException("Cron expression must be a string");
 
-        List<string> parts = [..reader.GetString()!.Split(' ')];
+        string[] parts = reader.GetString()!.Split(' ');
 
-        if (parts.Count is < 5 or > 7)
+        if (parts.Length is < 5 or > 7)
             throw new JsonException("Invalid cron expression");
 
         // standard cron expression are incompatible with the quartz format, so we need to convert them
-        if (parts.Count == 5) parts = ["0", ..parts];
+        if (parts.Length == 5) parts = ["0", ..parts];
 
         // day of week and day of month are mutually exclusive
         if (parts[3].Contains('*') && parts[5] != "?") parts[3] = "?";

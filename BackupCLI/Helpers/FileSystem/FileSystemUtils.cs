@@ -18,26 +18,10 @@ public static class FileSystemUtils
     /// </summary>
     public static bool AreDirectAncestors(DirectoryInfo left, DirectoryInfo right)
     {
-        left = FromPath(left.FullName.ToLower());
-        right = FromPath(right.FullName.ToLower());
+        string leftPath = NormalizePath(left.FullName, true).ToLower();
+        string rightPath = NormalizePath(right.FullName, true).ToLower();
 
-        if (left.FullName == right.FullName) return true;
-
-        DirectoryInfo _left = left;
-        while (_left.Parent is not null)
-        {
-            if (_left.Parent.FullName == right.FullName) return true;
-            _left = _left.Parent;
-        }
-
-        DirectoryInfo _right = right;
-        while (_right.Parent is not null)
-        {
-            if (_right.Parent.FullName == left.FullName) return true;
-            _right = _right.Parent;
-        }
-
-        return false;
+        return leftPath == rightPath || leftPath.StartsWith(rightPath) || rightPath.StartsWith(leftPath);
     }
 
     /// <summary>
@@ -45,8 +29,7 @@ public static class FileSystemUtils
     /// </summary>
     public static bool AreIdentical(FileInfo left, FileInfo right)
     {
-        // early return based on file metadata
-        if (!left.Exists || !right.Exists) return false;
+        if (!left.Exists || !right.Exists || left.Length != right.Length) return false;
         if (left.Length == right.Length && left.LastWriteTime == right.LastWriteTime) return true;
 
         try

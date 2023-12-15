@@ -26,7 +26,7 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
         {
             if (Contents.ContainsKey(path)) continue;
 
-            Update(path, [..GetBackupParts(hash)]);
+            Update(path, GetBackupParts(hash));
         }
     }
 
@@ -58,12 +58,12 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
     /// </summary>
     public void Dispose() => Folder.Delete(true);
 
-    public List<DirectoryInfo> GetBackupParts(string name)
+    public DirectoryInfo[] GetBackupParts(string name)
     {
         var parts = Json.Backups
             .Select(dir => new DirectoryInfo(Path.Join(Folder.FullName, dir, name)))
             .OrderBy(dir => dir.CreationTime)
-            .ToList();
+            .ToArray();
 
         return Method switch
         {
