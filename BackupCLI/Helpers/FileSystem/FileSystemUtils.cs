@@ -5,8 +5,21 @@ namespace BackupCLI.Helpers.FileSystem;
 
 public static class FileSystemUtils
 {
-    public static readonly EnumerationOptions TopLevelOptions = new() { IgnoreInaccessible = true, MatchCasing = MatchCasing.CaseInsensitive };
-    public static readonly EnumerationOptions RecursiveOptions = new() { IgnoreInaccessible = true, MatchCasing = MatchCasing.CaseInsensitive, RecurseSubdirectories = true };
+    public static readonly EnumerationOptions TopLevelOptions = new()
+    {
+        IgnoreInaccessible = true,
+        MatchCasing = MatchCasing.CaseInsensitive,
+        AttributesToSkip = FileAttributes.System
+    };
+
+    public static readonly EnumerationOptions RecursiveOptions = new()
+    {
+        IgnoreInaccessible = true,
+        MatchCasing = MatchCasing.CaseInsensitive,
+        AttributesToSkip = FileAttributes.System | FileAttributes.ReparsePoint,
+        RecurseSubdirectories = true
+    };
+
     private static readonly MD5 Hasher = MD5.Create();
 
     /// <summary>

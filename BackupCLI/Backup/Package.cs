@@ -62,15 +62,11 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
     {
         var parts = Json.Backups
             .Select(dir => new DirectoryInfo(Path.Join(Folder.FullName, dir, name)))
-            .OrderBy(dir => dir.CreationTime)
-            .ToArray();
+            .OrderBy(dir => dir.CreationTime);
 
-        return Method switch
-        {
-            BackupMethod.Full => [ parts.Single() ],
-            BackupMethod.Differential => [ parts.First() ],
-            _ => parts
-        };
+        int count = Method is BackupMethod.Incremental ? Retention.Size : 1;
+
+        return [..parts.Take(count)];
     }
 
     /// <summary>
