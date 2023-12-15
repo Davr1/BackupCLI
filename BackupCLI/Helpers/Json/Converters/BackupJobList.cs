@@ -18,6 +18,7 @@ public class BackupJobListConverter : JsonConverter<List<BackupJob>>
 
         var jobs = new List<BackupJob?>();
 
+        // while not recommended, it is possible to create a json file with a single backupjob in the root rather than being contained within an array
         if (root.ValueKind == JsonValueKind.Object && root.Deserialize<BackupJob>(options) is { } backupJob)
             jobs.Add(backupJob);
         else if (root.ValueKind == JsonValueKind.Array && root.Deserialize<BackupJob?[]>(options) is { } backupJobs)

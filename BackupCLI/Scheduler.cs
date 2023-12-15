@@ -5,10 +5,16 @@ using System.Diagnostics;
 
 namespace BackupCLI;
 
+/// <summary>
+/// Utility class for scheduling backup jobs with the quartz.net library.
+/// </summary>
 public static class Scheduler
 {
     private class SchedulerJob : IJob
     {
+        /// <summary>
+        /// Executes the given job and logs the time it took to complete.
+        /// </summary>
         public Task Execute(IJobExecutionContext context)
         {
             var watch = new Stopwatch();
@@ -34,6 +40,10 @@ public static class Scheduler
         }
     }
 
+    /// <summary>
+    /// Schedules the given backup jobs
+    /// </summary>
+    /// <param name="jobs">List of jobs to schedule - must have a valid <see cref="BackupJob.Timing"/> property</param>
     public static async Task SetupCronJobs(List<BackupJob> jobs)
     {
         IScheduler scheduler = await StdSchedulerFactory.GetDefaultScheduler();

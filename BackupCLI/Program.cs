@@ -8,13 +8,13 @@ public class Program
 {
     public class Options
     {
-        [Option('i', "input", Required = true, HelpText = "Path to the json file.")]
+        [Option('c', "config", Required = true, HelpText = "Path to the json config file.")]
         public string File { get; set; } = null!;
 
-        [Option('d', "debug", HelpText = "Path to a log file.")]
+        [Option('l', "log", HelpText = "Path to a log file.")]
         public string DebugLog { get; set; } = "latest.log";
 
-        [Option('q', "quiet", HelpText = "Suppresses console logs.")]
+        [Option('q', "quiet", HelpText = "Suppress console logs.")]
         public bool Quiet { get; set; } = false;
     }
 
