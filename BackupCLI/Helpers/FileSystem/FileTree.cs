@@ -47,7 +47,7 @@ public class FileTree
 
         var sourceDir = FileSystemUtils.NormalizePath(source.FullName, true);
 
-        foreach (var fsInfo in source.EnumerateFileSystemInfos("*", FileSystemUtils.RecursiveOptions))
+        foreach (var fsInfo in source.EnumerateFileSystemInfos("*", Options.Recursive))
         {
             string relativePath = fsInfo.FullName.Replace(sourceDir, "").ToLower();
 

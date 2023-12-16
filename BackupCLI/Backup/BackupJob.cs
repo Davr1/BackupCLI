@@ -21,6 +21,8 @@ public class BackupJob
         PrimaryTarget ??= new TargetDirectory(Targets.First(), Retention, Method, [..Sources.Select(s => s.FullName)]);
 
         var package = PrimaryTarget.GetLatestPackage();
+        Program.Logger.Info($"Using package {package.Folder.Name} at capacity {package.Size + 1}/{package.Retention.Size}");
+
         var targets = package.CreateBackupFolders();
 
         // copies the source directories to the primary target
@@ -67,7 +69,7 @@ public class BackupJob
             return;
         }
 
-        foreach (var fsinfo in source.EnumerateFileSystemInfos("*", FileSystemUtils.RecursiveOptions))
+        foreach (var fsinfo in source.EnumerateFileSystemInfos("*", Options.Recursive))
         {
             string relativePath = Path.GetRelativePath(source.FullName, fsinfo.FullName);
             string currentBackup = Path.Join(target, relativePath);
@@ -88,7 +90,7 @@ public class BackupJob
                 if (packageContent.GetFile(relativePath) is FileInfo backupFile)
                     if (FileSystemUtils.AreIdentical(file, backupFile)) continue;
 
-                Directory.CreateDirectory(Path.GetDirectoryName(currentBackup)!);
+                FileSystemUtils.CopyStructure(source.FullName, target, Path.GetDirectoryName(relativePath)!);
             }
 
             fsinfo.TryCopyTo(currentBackup, true);

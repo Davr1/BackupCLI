@@ -30,7 +30,7 @@ public class TargetDirectory(DirectoryInfo folder, BackupRetention retention, Ba
 
         var paths = FileSystemUtils.GetHashedPaths(SourcePaths);
         var defaultJson = new PackageJson(paths, FileSystemUtils.GetOrderedSubdirectories(packageDir));
-
+        
         var pkg = new Package(packageDir, Retention, Method, defaultJson);
 
         Packages.Enqueue(pkg);

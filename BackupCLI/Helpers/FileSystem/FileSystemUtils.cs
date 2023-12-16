@@ -5,21 +5,6 @@ namespace BackupCLI.Helpers.FileSystem;
 
 public static class FileSystemUtils
 {
-    public static readonly EnumerationOptions TopLevelOptions = new()
-    {
-        IgnoreInaccessible = true,
-        MatchCasing = MatchCasing.CaseInsensitive,
-        AttributesToSkip = FileAttributes.System
-    };
-
-    public static readonly EnumerationOptions RecursiveOptions = new()
-    {
-        IgnoreInaccessible = true,
-        MatchCasing = MatchCasing.CaseInsensitive,
-        AttributesToSkip = FileAttributes.System | FileAttributes.ReparsePoint,
-        RecurseSubdirectories = true
-    };
-
     private static readonly MD5 Hasher = MD5.Create();
 
     /// <summary>
@@ -99,8 +84,38 @@ public static class FileSystemUtils
     public static List<string> GetOrderedSubdirectories(DirectoryInfo dir)
     {
         dir.Create();
-        return [..dir.EnumerateDirectories("*", TopLevelOptions)
+        return [..dir.EnumerateDirectories("*", Options.TopLevel)
             .OrderBy(d => d.CreationTime)
             .Select(d => d.Name)];
+    }
+
+    /// <summary>
+    /// Copies the <paramref name="relativePath"/> directory structure from <paramref name="sourcePath"/> to <paramref name="destPath"/>,
+    /// and sets the attributes of the newly created directories to match the source.
+    /// </summary>
+    public static DirectoryInfo? CopyStructure(string sourcePath, string destPath, string relativePath)
+    {
+        if (!Directory.Exists(Path.Join(sourcePath, relativePath))) return null;
+
+        var source = new DirectoryInfo(sourcePath);
+        var dest = new DirectoryInfo(destPath);
+
+        try
+        {
+            foreach (var part in relativePath.Split(Path.DirectorySeparatorChar))
+            {
+                dest = dest.CreateSubdirectory(part);
+                source = new(Path.Join(source.FullName, part));
+
+                dest.Attributes = source.Attributes;
+            }
+
+            return dest;
+        }
+        catch (Exception e)
+        {
+            Program.Logger.Error(e);
+            return null;
+        }
     }
 }

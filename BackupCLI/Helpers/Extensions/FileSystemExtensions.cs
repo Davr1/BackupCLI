@@ -12,7 +12,7 @@ public static class FileSystemExtensions
     public static FileSystemInfo? CopyTo(this FileSystemInfo source, string destName, bool overwrite = false) =>
         source switch
         {
-            /* Symlinks are only enumerated when using the TopLevelOptions object, so by design only full backups allow for symlinking within themselves.
+            /* Symlinks are only enumerated when using the TopLevel options object, so by design only full backups allow for symlinking within themselves.
                Either way it would be quite difficult to make this work in partial backups. */
             { LinkTarget: not null } => source.CopySymLinkTo(destName),
             FileInfo file => file.CopyTo(destName, overwrite),
@@ -46,7 +46,7 @@ public static class FileSystemExtensions
             dir.Create();
             dir.Attributes = source.Attributes;
 
-            foreach (var entry in source.EnumerateFileSystemInfos("*", FileSystemUtils.TopLevelOptions)) 
+            foreach (var entry in source.EnumerateFileSystemInfos("*", Options.TopLevel)) 
                 entry.TryCopyTo(Path.Join(destDirName, entry.Name), overwrite);
         }
 
@@ -60,4 +60,24 @@ public static class FileSystemExtensions
         => source.Attributes.HasFlag(FileAttributes.Directory)
             ? Directory.CreateSymbolicLink(destName, source.LinkTarget!) 
             : File.CreateSymbolicLink(destName, source.LinkTarget!);
+
+    /// <summary>
+    /// Tries to recursively delete a directory
+    /// </summary>
+    public static void TryDelete(this DirectoryInfo source)
+    {
+        foreach (var fsinfo in source.EnumerateFileSystemInfos("*", Options.TopLevel))
+            try
+            {
+                // files/folders with the read-only attribute can't be deleted directly, this is a common issue with the .git folder
+                fsinfo.Attributes = FileAttributes.Normal;
+
+                if (fsinfo is DirectoryInfo dir) dir.TryDelete();
+                else if (fsinfo is FileInfo file) file.Delete();
+            }
+            catch (Exception e)
+            {
+                Program.Logger.Error(e);
+            }
+    }
 }

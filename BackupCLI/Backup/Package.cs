@@ -1,4 +1,5 @@
 ﻿using BackupCLI.Helpers.Collections;
+using BackupCLI.Helpers.Extensions;
 using BackupCLI.Helpers.FileSystem;
 
 namespace BackupCLI.Backup;
@@ -56,7 +57,7 @@ public class Package(DirectoryInfo folder, BackupRetention retention, BackupMeth
     /// <summary>
     /// Deletes the package folder and all its contents. This is only ever called by <see cref="FixedQueue{T}"/> when old packages are removed from the queue.
     /// </summary>
-    public void Dispose() => Folder.Delete(true);
+    public void Dispose() => Folder.TryDelete();
 
     public DirectoryInfo[] GetBackupParts(string name)
     {
