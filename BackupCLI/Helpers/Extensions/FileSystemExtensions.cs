@@ -80,5 +80,7 @@ public static class FileSystemExtensions
             {
                 Program.Logger.Error(e);
             }
+        
+        source.Delete(true);
     }
 }
