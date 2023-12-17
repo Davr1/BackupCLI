@@ -24,6 +24,7 @@ public static class FileSystemExtensions
     {
         try
         {
+            Directory.CreateDirectory(Path.GetDirectoryName(destName)!);
             source.CopyTo(destName, overwrite);
             return true;
         }

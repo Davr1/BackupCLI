@@ -32,7 +32,7 @@ public class BackupJobConverter : JsonConverter<BackupJob>
 
         // targets
         if (root.DeserializeOrDefault<List<string>>("targets", options: options) is { Count: > 0 } targets)
-            backupJob.Targets = targets.Select(Directory.CreateDirectory).ToList();
+            backupJob.Targets = targets.Select(FileSystemUtils.FromPath).ToList();
         else
             throw new JsonException("Targets list is missing or empty");
 
