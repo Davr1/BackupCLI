@@ -95,7 +95,8 @@ public static class FileSystemUtils
     /// </summary>
     public static DirectoryInfo? CopyStructure(string sourcePath, string destPath, string relativePath)
     {
-        if (!Directory.Exists(Path.Join(sourcePath, relativePath))) return null;
+        if (string.IsNullOrWhiteSpace(relativePath) || !Directory.Exists(Path.Join(sourcePath, relativePath)))
+            return null;
 
         var source = new DirectoryInfo(sourcePath);
         var dest = new DirectoryInfo(destPath);
