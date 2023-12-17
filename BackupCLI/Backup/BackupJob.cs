@@ -1,5 +1,6 @@
 ﻿using BackupCLI.Helpers.Extensions;
 using BackupCLI.Helpers.FileSystem;
+using BackupCLI.Helpers.Json;
 using Quartz;
 
 namespace BackupCLI.Backup;
@@ -40,8 +41,16 @@ public class BackupJob
         // mirrors the primary target to other targets
         foreach (var target in Targets.Skip(1))
         {
-            PrimaryTarget.MetadataFile.TryCopyTo(Path.Join(target.FullName, PrimaryTarget.MetadataFileName), true);
+            string oldMetadataPath = Path.Join(target.FullName, PrimaryTarget.MetadataFileName);
 
+            if (File.Exists(oldMetadataPath) && JsonUtils.TryLoadFile<TargetDirectoryJson>(oldMetadataPath, out var json))
+                // remove packages that are no longer present in the primary target
+                foreach (var pkg in json!.Packages.Where(p => !PrimaryTarget.Json.Packages.Contains(p)))
+                    new DirectoryInfo(Path.Join(target.FullName, pkg)).TryDelete();
+
+            PrimaryTarget.MetadataFile.TryCopyTo(oldMetadataPath, true);
+
+            // copy the new packages
             foreach (var pkg in PrimaryTarget.Packages)
             {
                 var mirrorPkg = Directory.CreateDirectory(Path.Join(target.FullName, pkg.Folder.Name));

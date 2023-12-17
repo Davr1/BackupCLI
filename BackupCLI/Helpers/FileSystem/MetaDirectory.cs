@@ -11,7 +11,7 @@ namespace BackupCLI.Helpers.FileSystem;
 public abstract class MetaDirectory<TJson> where TJson : class
 {
     public DirectoryInfo Folder { get; }
-    public string MetadataFileName { get; }
+    public virtual string MetadataFileName { get; } = "metadata.json";
     public FileInfo MetadataFile => new(Path.Join(Folder.FullName, MetadataFileName));
     protected List<DirectoryInfo> Subdirectories => [..Folder.GetDirectories()];
     protected virtual JsonSerializerOptions Options { get; set; } = new()
@@ -24,12 +24,10 @@ public abstract class MetaDirectory<TJson> where TJson : class
 
     public TJson Json { get; set; } = null!;
 
-    protected MetaDirectory(DirectoryInfo folder, string metadataFileName, TJson? @default = default)
+    protected MetaDirectory(DirectoryInfo folder, TJson? @default = default)
     {
         Folder = folder;
         Folder.Create();
-
-        MetadataFileName = metadataFileName;
 
         LoadMetadata(@default);
     }

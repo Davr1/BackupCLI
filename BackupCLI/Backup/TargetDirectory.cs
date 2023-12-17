@@ -11,7 +11,7 @@ namespace BackupCLI.Backup;
 /// <param name="method">See <see cref="BackupMethod"/></param>
 /// <param name="paths">The source directories that are copied into the packages</param>
 public class TargetDirectory(DirectoryInfo folder, BackupRetention retention, BackupMethod method, List<string> paths)
-    : MetaDirectory<TargetDirectoryJson>(folder, "metadata.json", new(FileSystemUtils.GetOrderedSubdirectories(folder)))
+    : MetaDirectory<TargetDirectoryJson>(folder, new(FileSystemUtils.GetOrderedSubdirectories(folder)))
 {
     public FixedQueue<Package> Packages { get; } = new(retention.Count);
     public BackupRetention Retention { get; } = retention;
@@ -34,8 +34,10 @@ public class TargetDirectory(DirectoryInfo folder, BackupRetention retention, Ba
         var pkg = new Package(packageDir, Retention, Method, defaultJson);
 
         Packages.Enqueue(pkg);
+
+        Json.Packages = [..Packages.Select(p => p.Folder.Name)];
         
-        SaveMetadata(new([..Packages.Select(p => p.Folder.Name)]));
+        SaveMetadata();
     }
 
     public Package GetLatestPackage()

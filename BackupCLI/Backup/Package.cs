@@ -12,8 +12,9 @@ namespace BackupCLI.Backup;
 /// <param name="method">See <see cref="BackupMethod"/></param>
 /// <param name="packageJson">The default config for the local metadata file</param>
 public class Package(DirectoryInfo folder, BackupRetention retention, BackupMethod method, PackageJson packageJson)
-    : MetaDirectory<PackageJson>(folder, "package.json", packageJson), IDisposable
+    : MetaDirectory<PackageJson>(folder, packageJson), IDisposable
 {
+    public override string MetadataFileName { get; } = "package.json";
     public BackupRetention Retention { get; } = retention;
     public BackupMethod Method { get; } = method;
     public Dictionary<string, FileTree> Contents { get; } = new();

@@ -10,6 +10,7 @@ public static class JsonUtils
     {
         WriteIndented = true,
         PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         Converters = { new JsonStringEnumConverter(), new BackupJobConverter(), new BackupJobListConverter(), new CronConverter() },
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
@@ -26,7 +27,7 @@ public static class JsonUtils
     {
         try
         {
-            output = LoadFile<T>(path, options);
+            output = LoadFile<T>(path, options ?? Options);
             return true;
         }
         catch (Exception e)
@@ -42,7 +43,7 @@ public static class JsonUtils
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            File.WriteAllText(path, JsonSerializer.Serialize(input, options));
+            File.WriteAllText(path, JsonSerializer.Serialize(input, options ?? Options));
             return true;
         }
         catch (Exception e)

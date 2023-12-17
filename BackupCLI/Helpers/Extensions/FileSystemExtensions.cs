@@ -67,6 +67,8 @@ public static class FileSystemExtensions
     /// </summary>
     public static void TryDelete(this DirectoryInfo source)
     {
+        if (!source.Exists) return;
+
         foreach (var fsinfo in source.EnumerateFileSystemInfos("*", Options.TopLevel))
             try
             {
