@@ -2,12 +2,7 @@
 Windows client for backing up local directories at predefined intervals with a simple command line interface.
 
 ## Installation
-There is no setup required.
-
-### Prebuilt binaries
-| [Portable](http://gitlab.com/sssvt-all/studenti/2021bsk1/sssvt-rizzieri-david-g/backupcli/-/jobs/artifacts/master/raw/BackupCLI_Portable.exe?job=build) | [Standalone](http://gitlab.com/sssvt-all/studenti/2021bsk1/sssvt-rizzieri-david-g/backupcli/-/jobs/artifacts/master/raw/BackupCLI_Standalone.exe?job=build) |
-|-|-|
-| Requires .NET 8.0, ~5.5 MB | Comes bundled with .NET, ~80 MB |
+To build the project, run `dotnet publish -p:PublishProfile=Build` (requires .NET 8.0)
 
 ## Usage
 - `-c` / `--config` - Path to a json config file
